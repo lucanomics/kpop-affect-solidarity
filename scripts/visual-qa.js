@@ -102,8 +102,16 @@ const LANGS = Object.fromEntries(
       yaml.load(fs.readFileSync(path.join(ROOT, 'examples', f), 'utf8')).exam.lang ?? 'en',
     ])
 );
+const isBlank = (pdf) => path.relative(OUT, pdf).split(path.sep)[0] === 'blank';
+
 function langOf(pdf) {
   const base = path.basename(pdf);
+  if (isBlank(pdf)) {
+    // output/blank/<lang>/NN-name.pdf, or output/blank/exam-matrix-blank-<lang>.pdf
+    const dir = path.basename(path.dirname(pdf));
+    if (dir === 'ko' || dir === 'en') return dir;
+    return base.endsWith('-ko.pdf') ? 'ko' : 'en';
+  }
   const inExamples = path.dirname(pdf).endsWith('examples');
   const name = inExamples ? base.split('-universal-study-notes')[0] : primary;
   return LANGS[name] ?? 'en';
@@ -114,6 +122,7 @@ function checkPdf(pdf) {
   const sizes = pageSizes(pdf);
   const pages = words(pdf);
   const isKo = langOf(pdf) === 'ko';
+  const blank = isBlank(pdf);
 
   // --- geometry ----------------------------------------------------------
   sizes.forEach((s, i) => {
@@ -145,12 +154,15 @@ function checkPdf(pdf) {
       }
     }
 
-    // A page carrying only the running footer is an accident, not a design.
-    const body = pg.words.filter((w) => w.y1 < pg.h - 30 && w.text.trim()).length;
-    if (body < 3) {
-      const ink = pageInk(pdf, n);
-      if (ink > 0.995) add('ERROR', rel, n, `page is blank (mean luminance ${ink.toFixed(4)})`);
-      else add('WARN', rel, n, `page carries almost no text (${body} words)`);
+    // A page carrying only the running footer is an accident, not a design —
+    // except on the handwriting templates, where empty is the entire point.
+    if (!blank) {
+      const body = pg.words.filter((w) => w.y1 < pg.h - 30 && w.text.trim()).length;
+      if (body < 3) {
+        const ink = pageInk(pdf, n);
+        if (ink > 0.995) add('ERROR', rel, n, `page is blank (mean luminance ${ink.toFixed(4)})`);
+        else add('WARN', rel, n, `page carries almost no text (${body} words)`);
+      }
     }
   });
 
@@ -186,11 +198,14 @@ function checkPdf(pdf) {
 
 // ---------------------------------------------------------------------------
 
-const pdfs = [
-  ...fs.readdirSync(OUT).filter((f) => f.endsWith('.pdf')).map((f) => path.join(OUT, f)),
-  ...fs.readdirSync(path.join(OUT, 'examples')).filter((f) => f.endsWith('.pdf'))
-      .map((f) => path.join(OUT, 'examples', f)),
-];
+function walk(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const full = path.join(dir, e.name);
+    if (e.isDirectory()) return walk(full);
+    return e.name.endsWith('.pdf') ? [full] : [];
+  });
+}
+const pdfs = walk(OUT).sort();
 
 console.log(`Checking ${pdfs.length} PDFs\n`);
 for (const pdf of pdfs) {

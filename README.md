@@ -10,12 +10,53 @@ Generalised from the 셀프엑셀표 ("self Excel table") method taught by 문�
 
 ```bash
 npm install
-npm run build        # every example → output/
-npm run qa           # inspect the generated PDFs
+npm run build:all    # notes + blank templates + editor
+npm run qa           # inspect every generated PDF
 npm run init         # scaffold a YAML for your own exam
 ```
 
-Output for the primary example:
+## Two ways in
+
+You do not have to write YAML by hand, and you do not have to type at all if you
+would rather write.
+
+### A. Type it — `tools/editor.html`
+
+Open the file in a browser. No server, no npm, no network — it works from
+`file://` and on a tablet. Forms for everything, a proper grid editor for the
+matrix (add and remove rows and columns, set a marker per cell), autosave to the
+browser, Korean/English interface. It loads an existing `.yaml` and downloads
+one back, and shows the YAML live while you type.
+
+```
+tools/editor.html   →   my-exam.yaml   →   node scripts/build.js my-exam.yaml   →   PDF
+```
+
+### B. Print it blank and write — `output/blank/`
+
+Empty forms in the same design language, sized for a stylus.
+
+| File | Use |
+|---|---|
+| `output/blank/exam-matrix-blank-ko.pdf` · `-en.pdf` | The whole 12-page workbook, with PDF bookmarks |
+| `output/blank/ko/` · `output/blank/en/` | **One single-page PDF per form** |
+
+The per-page files exist because GoodNotes, Notability and Noteshelf all import a
+one-page PDF as a reusable **template** — you add that page as many times as you
+need inside a notebook. A twelve-page workbook cannot be used that way, so both
+forms ship. Two things are deliberate in these:
+
+- **The matrix column headers are blank, with a rule to write on and a small
+  dashed box for the marker code.** The comparison axes belong to the topic, so a
+  pre-printed set of columns would defeat the entire method.
+- **Rows are 19–21mm**, roughly twice the height of the typeset edition, because
+  that is what handwriting needs.
+
+Every topic-scoped sheet carries write-in **주제 / Topic** and **날짜 / Date**
+fields in the header — a stack of thirty identical matrix pages is useless
+without them.
+
+### Generated notes, once you have data
 
 | File | What it is |
 |---|---|
@@ -174,12 +215,19 @@ Then, in order of importance:
    preferentially in the Recall Edition, so marking is what tunes your practice.
 4. **Fill the error log as you go**, always naming a cell.
 
+Or skip the YAML entirely at first: print `output/blank/` and fill the forms by
+hand, then type up whatever survives. That order matches the source method,
+where the table is a precipitate of work already done rather than a container to
+fill.
+
 Building:
 
 ```bash
 node scripts/build.js examples/law.yaml          # one file → output/examples/
 node scripts/build.js --primary law              # law owns the top-level filenames
 node scripts/build.js --html                     # keep the intermediate HTML
+node scripts/build-blank.js                      # rebuild the handwriting templates
+node scripts/build-editor.js                     # rebuild tools/editor.html
 node scripts/visual-qa.js --png                  # write page rasters to qa/
 ```
 
@@ -211,12 +259,21 @@ not fit gets more page, or gets split. `src/render.js` then stretches row height
 so a short matrix uses its page, and sizes the "detail I added myself" block to
 absorb whatever is left.
 
+**The editor is a single file with no build dependency at runtime.** `file://`
+blocks ES-module imports and there is no CDN to rely on offline, so the one thing
+it cannot hand-roll — a YAML *parser*, for the Load button — is vendored in by
+`scripts/build-editor.js`. The *emitter* is hand-written in the editor so its
+output matches the block-scalar and flow-map style the examples use, which keeps
+hand-edited and editor-generated files indistinguishable.
+
 **QA inspects the output, not the source.** `scripts/visual-qa.js` reads page
 geometry from `pdfinfo`, word bounding boxes from `pdftotext -bbox-layout`, and
 page ink from a greyscale raster, then fails the build on: non-A4 pages, any
 glyph within 6mm of a trim edge, text below 7pt, blank pages, replacement
 characters, a Korean document with no Hangul in its text layer, and matrix
-continuation pages missing their repeated header.
+continuation pages missing their repeated header. It covers all 38 PDFs,
+including the blank templates (where the blank-page rule is suspended, since
+empty is the point).
 
 ### Requirements
 
@@ -250,9 +307,21 @@ for `npm run qa`.
 │   ├── lib/layout.js          orientation and column-splitting
 │   ├── lib/recall.js          deterministic cell withholding
 │   ├── render.js              every page template
+│   ├── blank.js               the handwriting templates
 │   └── styles.css             the print design system
-├── scripts/{build,init-exam,visual-qa}.js
+├── tools/
+│   ├── editor.template.html   editor source (edit this)
+│   └── editor.html            built, self-contained (js-yaml inlined)
+├── scripts/
+│   ├── build.js               YAML → notes PDFs
+│   ├── build-blank.js         → output/blank/
+│   ├── build-editor.js        → tools/editor.html
+│   ├── init-exam.js           scaffold a new exam
+│   └── visual-qa.js           inspect the generated PDFs
 └── output/
+    ├── universal-study-notes*.pdf
+    ├── examples/              the other three worked examples
+    └── blank/                 handwriting templates
 ```
 
 ---

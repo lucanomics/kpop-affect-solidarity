@@ -6,6 +6,9 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.js",
+    "build:blank": "node scripts/build-blank.js",
+    "build:editor": "node scripts/build-editor.js",
+    "build:all": "node scripts/build.js && node scripts/build-blank.js && node scripts/build-editor.js",
     "init": "node scripts/init-exam.js",
     "qa": "node scripts/visual-qa.js"
   },
