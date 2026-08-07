@@ -289,6 +289,24 @@ for `npm run qa`.
 
 ---
 
+## Hosting it
+
+`vercel.json` + `scripts/build-site.js` assemble a static site in `public/`: the
+editor at `/editor.html` and every PDF under `/files/`, with a Korean landing
+page generated from whatever is actually in `output/`.
+
+```bash
+node scripts/build-site.js && npx serve public   # or any static server
+```
+
+The hosting build **does not run Chromium**. The PDFs need a headless browser
+and `fonts-noto-cjk`, neither of which a serverless build image has, so they are
+generated locally and committed; `build-site.js` only copies files and writes one
+HTML page. That is why `installCommand` is a no-op and the build finishes in
+seconds on any static host.
+
+---
+
 ## Repository layout
 
 ```
