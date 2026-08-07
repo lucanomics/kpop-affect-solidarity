@@ -1,0 +1,289 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/lucanomics/universal-exam-matrix/schema/exam.schema.json",
+  "title": "Exam Matrix study-note source file",
+  "description": "Content for one exam. Presentation lives in src/; nothing here describes layout except the optional matrix.layout hint.",
+  "type": "object",
+  "required": ["exam", "topics"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "marker": {
+      "description": "Semantic marker. Rendered with a label, a border treatment and a tint, so it survives grayscale printing.",
+      "enum": ["core", "distinction", "exception", "trap", "update", "evidence"]
+    },
+    "priority": { "enum": ["A", "B", "C"] },
+    "confidence": {
+      "description": "1 = no idea, 5 = could teach it.",
+      "type": "integer", "minimum": 1, "maximum": 5
+    },
+    "cell": {
+      "description": "A matrix cell. A bare string is the common case; the object form adds a marker or a footnote.",
+      "oneOf": [
+        { "type": ["string", "number", "null"] },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "v": { "type": ["string", "number"] },
+            "value": { "type": ["string", "number"] },
+            "mark": { "$ref": "#/definitions/marker" },
+            "note": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "cellRef": {
+      "description": "Structural pointer at one matrix cell. The string form is a free-text fallback; prefer the object form so dangling references are caught at build time.",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["row", "column"],
+          "additionalProperties": false,
+          "properties": {
+            "topic":  { "type": "string", "description": "topics[].id — may be omitted inside topics[].evidence, where it defaults to the containing topic" },
+            "row":    { "type": "string", "description": "matrix.rows[].label" },
+            "column": { "type": "string", "description": "matrix.columns[].key" }
+          }
+        }
+      ]
+    }
+  },
+
+  "properties": {
+    "exam": {
+      "type": "object",
+      "required": ["name"],
+      "additionalProperties": false,
+      "properties": {
+        "name":    { "type": "string" },
+        "name_sub":{ "type": "string", "description": "Secondary/translated name shown under the title." },
+        "lang":    { "enum": ["en", "ko"], "default": "en", "description": "Language for built-in labels and archetype column names." },
+        "authority": { "type": "string", "description": "Awarding body." },
+        "date":    { "type": "string", "description": "Sitting date, YYYY-MM-DD." },
+        "syllabus_version": { "type": "string", "description": "Which syllabus edition this file is written against. Keep it visible: facts expire." },
+        "passing": { "type": "string" },
+        "subjects": { "type": "array", "items": { "type": "string" } },
+        "sources": { "type": "array", "items": { "type": "string" } },
+        "target_score": { "type": ["string", "number"] },
+        "confidence": { "$ref": "#/definitions/confidence" },
+        "last_updated": { "type": "string" },
+        "what_it_tests": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "What the exam actually rewards, as opposed to what the syllabus lists."
+        },
+        "blueprint": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["domain"],
+            "additionalProperties": false,
+            "properties": {
+              "domain": { "type": "string" },
+              "weight": { "type": ["string", "number"] },
+              "question_type": { "type": "string" },
+              "priority": { "$ref": "#/definitions/priority" },
+              "confidence": { "$ref": "#/definitions/confidence" },
+              "last_review": { "type": "string" }
+            }
+          }
+        },
+        "high_yield": { "type": "array", "items": { "type": "string" } },
+        "weak":       { "type": "array", "items": { "type": "string" } },
+        "volatile":   { "type": "array", "items": { "type": "string" }, "description": "Version-sensitive topics: law amendments, spec revisions, guideline updates." }
+      }
+    },
+
+    "topics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "archetype", "matrix"],
+        "additionalProperties": false,
+        "properties": {
+          "id":    { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+          "title": { "type": "string" },
+          "archetype": { "enum": ["concept", "law", "calculation", "it", "language", "procedure"] },
+          "importance": { "$ref": "#/definitions/priority" },
+          "frequency": { "type": "string", "description": "How often it has appeared, in your own words." },
+          "why": { "type": "string", "description": "Why it matters — one or two sentences." },
+          "core_question": { "type": "string", "description": "The question the exam is really asking here." },
+          "key_axis": { "type": "string", "description": "The single comparison axis this topic turns on." },
+          "prerequisites": { "type": "array", "items": { "type": "string" } },
+          "sources": { "type": "array", "items": { "type": "string" } },
+          "updated": { "type": "string" },
+          "one_sentence": {
+            "type": "string",
+            "description": "The one-sentence model answer. Blanked in the Recall Edition."
+          },
+          "essentials": {
+            "type": "array",
+            "maxItems": 5,
+            "items": { "type": "string" },
+            "description": "Five facts maximum. The cap is deliberate."
+          },
+
+          "matrix": {
+            "type": "object",
+            "required": ["rows"],
+            "additionalProperties": false,
+            "properties": {
+              "row_label": { "type": "string", "description": "Header for the leftmost column." },
+              "note": { "type": "string" },
+              "layout": { "enum": ["auto", "portrait", "landscape"], "default": "auto" },
+              "columns": {
+                "type": "array",
+                "minItems": 1,
+                "description": "Level 3 axes. Omit to inherit the archetype defaults.",
+                "items": {
+                  "type": "object",
+                  "required": ["key"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "key":      { "type": "string" },
+                    "label":    { "type": "string" },
+                    "label_ko": { "type": "string" },
+                    "mark":     { "$ref": "#/definitions/marker" }
+                  }
+                }
+              },
+              "rows": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["label"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "label": { "type": "string" },
+                    "sub":   { "type": "string" },
+                    "cells": { "type": "object", "additionalProperties": { "$ref": "#/definitions/cell" } }
+                  }
+                }
+              }
+            }
+          },
+
+          "decisive": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "If an examiner forced you to separate these using ONE criterion, what would it be?",
+            "properties": {
+              "prompt": { "type": "string" },
+              "answer": { "type": "string" },
+              "pairs": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["a", "b"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "a": { "type": "string" },
+                    "b": { "type": "string" },
+                    "why": { "type": "string", "description": "Why they get confused." },
+                    "clue": { "type": "string", "description": "The decisive clue in the question stem." }
+                  }
+                }
+              }
+            }
+          },
+
+          "traps": {
+            "type": "array",
+            "description": "Only facts that can change an answer choice. Not trivia.",
+            "items": {
+              "type": "object",
+              "required": ["cue"],
+              "additionalProperties": false,
+              "properties": {
+                "cue":       { "type": "string", "description": "The statement as the exam phrases it." },
+                "usually":   { "type": "string" },
+                "exception": { "type": "string" },
+                "why":       { "type": "string", "description": "Why it tricks people." },
+                "source":    { "type": "string" }
+              }
+            }
+          },
+
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "cell":      { "$ref": "#/definitions/cellRef" },
+                "source":    { "type": "string" },
+                "exam":      { "type": "string", "description": "Exam and year." },
+                "question":  { "type": "string", "description": "Reference or short paraphrase — do not reproduce copyrighted items." },
+                "tested_as": { "type": "string", "description": "The examiner's wording. This is content, not metadata." },
+                "risk":      { "enum": ["high", "mid", "low"] }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "error_log": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "date":     { "type": "string" },
+          "question": { "type": "string" },
+          "topic":    { "type": "string" },
+          "mine":     { "type": "string", "description": "My answer." },
+          "correct":  { "type": "string" },
+          "error_type": {
+            "enum": ["knowledge-gap", "confused-pair", "exception-forgotten", "wording-misread",
+                     "formula-selection", "calculation", "procedure-order", "outdated",
+                     "careless", "time-pressure"]
+          },
+          "missing_distinction": { "type": "string" },
+          "matrix_update": { "$ref": "#/definitions/cellRef" },
+          "retest": { "type": "string" }
+        }
+      }
+    },
+
+    "compression": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "L1 is the full matrix. These are the deliberate reductions.",
+      "properties": {
+        "l2": {
+          "type": "array",
+          "description": "Exam-day matrix: high-yield distinctions, exceptions, formulas, traps only.",
+          "items": {
+            "type": "object",
+            "required": ["item"],
+            "additionalProperties": false,
+            "properties": {
+              "item":   { "type": "string" },
+              "detail": { "type": "string" },
+              "mark":   { "$ref": "#/definitions/marker" }
+            }
+          }
+        },
+        "l3": {
+          "type": "array",
+          "description": "Last ten minutes. One or two pages maximum — the build warns past that.",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "blank_rows": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How many empty hand-writing rows to append.",
+      "properties": {
+        "error_log": { "type": "integer", "minimum": 0, "maximum": 40, "default": 12 }
+      }
+    }
+  }
+}

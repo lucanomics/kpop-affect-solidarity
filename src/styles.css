@@ -1,0 +1,431 @@
+/* ==========================================================================
+   Exam Matrix — print design system
+   A4 · duplex · grayscale-safe · handwriting-first
+   Semantic markers are encoded three ways (label + border + tint) so that
+   nothing is lost when the PDF is photocopied in black and white.
+   ========================================================================== */
+
+/* Bottom margins carry the running footer. They are deep enough that the
+   footer text clears the unsafe trim zone on a domestic printer — verified by
+   scripts/visual-qa.js, which fails the build if any glyph comes within 6mm of
+   a page edge. */
+@page {
+  size: A4 portrait;
+  margin: 16mm 15mm 15mm 15mm;
+}
+@page land {
+  size: A4 landscape;
+  margin: 14mm 13mm 14mm 13mm;
+}
+
+:root {
+  --ink:        #14171c;
+  --ink-2:      #3d434d;
+  --muted:      #6b727d;
+  --rule:       #a8afb9;
+  --hair:       #d8dce1;
+  --accent:     #1f4b73;
+
+  --tint-1:     #f5f6f8;
+  --tint-2:     #eceef2;
+  --tint-exc:   #f0ece5;
+  --tint-trap:  #e7e5e9;
+
+  --font-sans:  "Noto Sans CJK KR", "Noto Sans", system-ui, sans-serif;
+  --font-serif: "Noto Serif CJK KR", "Noto Serif", Georgia, serif;
+  --font-mono:  "Noto Sans Mono CJK KR", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 9.5pt;
+  line-height: 1.45;
+  color: var(--ink);
+  background: #fff;
+  font-feature-settings: "tnum" 1;
+  /* Hangul must break between words, not mid-word. Without keep-all Chromium
+     breaks Korean at any syllable, which is what makes machine-set Korean look
+     broken. break-word is the escape hatch for long unbreakable Latin tokens. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* --- page scaffolding ---------------------------------------------------- */
+
+.page { break-after: page; }
+.page:last-child { break-after: auto; }
+.page.land { page: land; }
+
+.eyebrow {
+  font-size: 7.5pt;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.page-head {
+  border-bottom: 1.6pt solid var(--ink);
+  padding-bottom: 2.5mm;
+  margin-bottom: 5mm;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6mm;
+}
+.page-head .title {
+  font-family: var(--font-serif);
+  font-size: 16pt;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 1mm 0 0;
+  letter-spacing: -.01em;
+}
+.page-head .sub { font-size: 8.5pt; color: var(--muted); margin-top: 1mm; }
+.page-head .rhs { text-align: right; font-size: 8pt; color: var(--muted); white-space: nowrap; }
+
+h2.section {
+  font-size: 10.5pt;
+  font-weight: 700;
+  margin: 6mm 0 2.5mm;
+  padding-bottom: 1.2mm;
+  border-bottom: .8pt solid var(--rule);
+  letter-spacing: .01em;
+  break-after: avoid;
+}
+h2.section:first-of-type { margin-top: 0; }
+h2.section .hint { font-weight: 400; color: var(--muted); font-size: 8pt; margin-left: 2mm; }
+
+.block { break-inside: avoid; margin-bottom: 5mm; }
+
+/* --- generic tables ------------------------------------------------------ */
+
+table { border-collapse: collapse; width: 100%; }
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+
+th, td {
+  border: .6pt solid var(--rule);
+  padding: 1.6mm 2mm;
+  vertical-align: top;
+  text-align: left;
+}
+thead th {
+  background: var(--tint-2);
+  font-size: 8.5pt;
+  font-weight: 700;
+  line-height: 1.25;
+}
+td { font-size: 9pt; }
+
+/* --- meta / definition grid ---------------------------------------------- */
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-top: .6pt solid var(--rule);
+  border-left: .6pt solid var(--rule);
+}
+.meta.two { grid-template-columns: repeat(2, 1fr); }
+.meta > div {
+  border-right: .6pt solid var(--rule);
+  border-bottom: .6pt solid var(--rule);
+  padding: 2mm 2.5mm;
+  min-height: 13mm;
+}
+.meta dt {
+  font-size: 7.5pt;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0 0 1mm;
+}
+.meta dd { margin: 0; font-size: 9.5pt; }
+.meta dd.big { font-size: 13pt; font-family: var(--font-serif); font-weight: 700; }
+.meta dd.fill { min-height: 6mm; border-bottom: .5pt dotted var(--hair); }
+
+/* --- the Exam Matrix ----------------------------------------------------- */
+
+.matrix { font-size: 9.5pt; }
+.matrix caption { caption-side: top; text-align: left; }
+
+.matrix thead .mx-title th {
+  background: var(--ink);
+  color: #fff;
+  font-size: 9pt;
+  letter-spacing: .04em;
+  padding: 1.8mm 2mm;
+  border-color: var(--ink);
+}
+.matrix thead .mx-title .cont {
+  float: right;
+  font-weight: 400;
+  opacity: .8;
+  font-size: 8pt;
+}
+.matrix thead .mx-cols th { vertical-align: bottom; }
+.matrix th.rowlab, .matrix td.rowlab {
+  background: var(--tint-1);
+  font-weight: 700;
+  font-size: 9.5pt;
+}
+.matrix td.rowlab .sub {
+  display: block;
+  font-weight: 400;
+  font-size: 8pt;
+  color: var(--muted);
+  margin-top: .6mm;
+}
+.matrix tbody tr { height: 9mm; }
+
+/* marker chip in the column header */
+.chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 6.5pt;
+  letter-spacing: .08em;
+  font-weight: 700;
+  border: .5pt solid var(--ink-2);
+  border-radius: .6mm;
+  padding: 0 .8mm;
+  margin-bottom: 1mm;
+  color: var(--ink-2);
+  background: #fff;
+  white-space: nowrap;
+}
+
+/* cell markers — border style + tint + sigil, never colour alone */
+td.m-distinction { background: var(--tint-2);  border-left: 2.2pt solid var(--ink-2); }
+td.m-exception   { background: var(--tint-exc); border-left: 2.2pt double var(--ink-2); }
+td.m-trap        { background: var(--tint-trap); border-left: 2.8pt solid var(--ink); }
+td.m-update      { border-left: 2.2pt dotted var(--ink-2); }
+td.m-evidence    { font-family: var(--font-mono); font-size: 8pt; }
+
+.sigil {
+  font-size: 7.5pt;
+  margin-right: .8mm;
+  color: var(--ink-2);
+}
+.cell-note {
+  display: block;
+  margin-top: .8mm;
+  padding-top: .8mm;
+  border-top: .4pt dotted var(--rule);
+  font-size: 7.5pt;
+  color: var(--muted);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5mm 4mm;
+  font-size: 7.5pt;
+  color: var(--ink-2);
+  margin-top: 2.5mm;
+}
+.legend span { white-space: nowrap; }
+.legend b { font-family: var(--font-mono); font-size: 6.5pt; letter-spacing: .06em; }
+
+/* --- recall edition ------------------------------------------------------ */
+
+.matrix.recall tbody tr { height: 16mm; }
+td.blank {
+  background: repeating-linear-gradient(
+    to bottom, transparent 0, transparent 6.8mm, var(--hair) 6.8mm, var(--hair) 7mm);
+  position: relative;
+}
+.blank-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 6.5pt;
+  font-weight: 700;
+  line-height: 1.5;
+  min-width: 4.4mm;
+  text-align: center;
+  border: .6pt solid var(--ink-2);
+  border-radius: .5mm;
+  padding: 0 .5mm;
+  color: var(--ink-2);
+  background: #fff;
+}
+.blank-diff {
+  float: right;
+  font-size: 6pt;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+
+.lines {
+  background-image: repeating-linear-gradient(
+    to bottom, transparent 0, transparent 7.3mm, var(--hair) 7.3mm, var(--hair) 7.5mm);
+  min-height: 22.5mm;
+}
+.lines.tall { min-height: 37.5mm; }
+.lines.short { min-height: 15mm; }
+
+/* --- one-sentence model & essentials ------------------------------------- */
+
+.one-sentence {
+  border: 1pt solid var(--ink);
+  padding: 3mm;
+  background: var(--tint-1);
+}
+.one-sentence .prompt {
+  font-size: 8pt;
+  color: var(--ink-2);
+  margin-bottom: 2mm;
+  font-style: italic;
+}
+.one-sentence .answer { font-size: 10.5pt; font-family: var(--font-serif); line-height: 1.5; }
+
+ol.essentials { margin: 0; padding: 0; list-style: none; counter-reset: e; }
+ol.essentials li {
+  counter-increment: e;
+  display: flex;
+  gap: 2.5mm;
+  padding: 2mm 0 6mm;
+  border-bottom: .5pt dotted var(--hair);
+  min-height: 14mm;
+}
+ol.essentials li::before {
+  content: counter(e);
+  font-family: var(--font-mono);
+  font-size: 8pt;
+  font-weight: 700;
+  color: #fff;
+  background: var(--ink-2);
+  width: 4.5mm; height: 4.5mm;
+  flex: 0 0 4.5mm;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 4.5mm;
+  margin-top: .4mm;
+}
+
+/* --- decisive distinction panel ------------------------------------------ */
+
+.decisive {
+  border: 1.6pt solid var(--ink);
+  padding: 3.5mm;
+}
+.decisive .q {
+  font-family: var(--font-serif);
+  font-size: 10.5pt;
+  line-height: 1.45;
+  font-style: italic;
+  padding-bottom: 2.5mm;
+  margin-bottom: 2.5mm;
+  border-bottom: .6pt solid var(--rule);
+}
+.decisive .a { font-size: 10pt; font-weight: 500; }
+
+/* --- compression ladder -------------------------------------------------- */
+
+.ladder { display: flex; gap: 3mm; margin-bottom: 5mm; }
+.ladder > div {
+  flex: 1;
+  border: .6pt solid var(--rule);
+  border-top: 2.5pt solid var(--ink);
+  padding: 2.5mm;
+}
+.ladder .lv { font-family: var(--font-mono); font-size: 8pt; font-weight: 700; }
+.ladder .nm { font-size: 8.5pt; font-weight: 700; margin: .8mm 0; }
+.ladder .ds { font-size: 7.5pt; color: var(--muted); line-height: 1.35; }
+
+ul.l3 { margin: 0; padding: 0; list-style: none; column-count: 2; column-gap: 8mm; }
+ul.l3 li {
+  break-inside: avoid;
+  padding: 1.8mm 0 1.8mm 5mm;
+  border-bottom: .5pt dotted var(--hair);
+  font-size: 9.5pt;
+  position: relative;
+}
+ul.l3 li::before {
+  content: "";
+  position: absolute; left: 0; top: 2.6mm;
+  width: 3mm; height: 3mm;
+  border: .7pt solid var(--ink-2);
+}
+
+/* --- review tracker (deliberately understated) --------------------------- */
+
+.review td, .review th { text-align: center; font-size: 8.5pt; }
+.review td:first-child, .review th:first-child { text-align: left; }
+.review tbody td:not(:first-child) { height: 8mm; background: var(--tint-1); }
+
+/* --- misc ---------------------------------------------------------------- */
+
+.note {
+  font-size: 8pt;
+  color: var(--muted);
+  line-height: 1.4;
+  border-left: 2pt solid var(--hair);
+  padding-left: 2.5mm;
+  margin: 2.5mm 0;
+}
+.pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 7pt;
+  font-weight: 700;
+  letter-spacing: .06em;
+  border: .6pt solid var(--ink-2);
+  padding: .2mm 1.2mm;
+  border-radius: .6mm;
+}
+.pill.a { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pill.b { background: var(--tint-2); }
+.pill.wide { white-space: nowrap; letter-spacing: 0; }
+
+td.nowrap, th.nowrap { white-space: nowrap; }
+
+/* Space the learner fills in themselves — the "self" in 셀프엑셀표. */
+.own {
+  margin-top: 4mm;
+  border: .6pt solid var(--rule);
+  border-top: 1.6pt solid var(--ink);
+  padding: 2mm 2.5mm 0;
+  break-inside: avoid;
+}
+.own .lines { min-height: 18mm; }
+.own .lbl {
+  font-size: 7.5pt;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink-2);
+  margin-bottom: 1.5mm;
+}
+
+.tags { font-size: 8.5pt; color: var(--ink-2); }
+.tags b { font-weight: 700; }
+
+.kv { font-size: 8.5pt; margin: 0 0 1.2mm; }
+.kv b { color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: 7.5pt; letter-spacing: .05em; }
+
+.answer-key { column-count: 2; column-gap: 8mm; font-size: 8.5pt; }
+.answer-key .ak-topic { break-inside: avoid-column; margin-bottom: 3.5mm; }
+.answer-key h3 {
+  font-size: 9pt; margin: 0 0 1.5mm; padding-bottom: .8mm;
+  border-bottom: .8pt solid var(--ink);
+}
+.answer-key ol { margin: 0; padding: 0; list-style: none; }
+.answer-key li { padding: .8mm 0; border-bottom: .4pt dotted var(--hair); line-height: 1.35; }
+.answer-key .n {
+  display: inline-block;
+  font-family: var(--font-mono); font-weight: 700; font-size: 6.5pt;
+  min-width: 4.4mm; text-align: center;
+  border: .6pt solid var(--ink-2); border-radius: .5mm; padding: 0 .5mm;
+  color: var(--ink-2);
+}
+.answer-key .w { color: var(--muted); font-size: 7.5pt; }
+
+.toc { font-size: 9pt; }
+.toc td:first-child { font-family: var(--font-mono); font-size: 8pt; width: 12mm; }
