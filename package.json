@@ -1,5 +1,5 @@
 {
-  "name": "universal-exam-matrix",
+  "name": "exam-matrix",
   "version": "1.0.0",
   "private": true,
   "description": "Exam Matrix — a discrimination-and-retrieval PDF study-note system for certification exams",
