@@ -1,0 +1,358 @@
+# ---------------------------------------------------------------------------
+# SAMPLE DATA — demonstrates the `concept` archetype in English.
+# Illustrative only; verify against your own syllabus.
+#
+# This is the archetype closest to the source method's original subject matter
+# (theory comparison), and the one where the "tested wording" column matters most.
+# ---------------------------------------------------------------------------
+
+exam:
+  name: Organisational Behaviour & Assessment
+  name_sub: Occupational psychology certification — theory paper (sample)
+  lang: en
+  authority: Sample Professional Board
+  date: '2027-03-20'
+  syllabus_version: 'Syllabus v4.2 (sample — verify current edition)'
+  passing: 60% with no compensation between sections
+  target_score: 78
+  confidence: 2
+  last_updated: '2026-08-07'
+  subjects:
+    - Motivation and engagement
+    - Psychometrics
+    - Leadership and teams
+  sources:
+    - Board reading list, 3rd edition
+    - Past papers 2020–2025
+  what_it_tests:
+    - Whether you can attribute a described scenario to the right theorist
+    - Whether you know what each theory does NOT claim
+    - Precise use of terms that share everyday meanings but differ technically
+    - Whether you can name the construct being measured, not just describe it
+  blueprint:
+    - domain: Motivation theory
+      weight: 30
+      question_type: Scenario-based multiple choice
+      priority: A
+      confidence: 2
+      last_review: '2026-08-05'
+    - domain: Psychometrics
+      weight: 30
+      question_type: Multiple choice + short answer
+      priority: A
+      confidence: 2
+      last_review: '2026-08-06'
+    - domain: Leadership
+      weight: 25
+      question_type: Scenario-based multiple choice
+      priority: B
+      confidence: 3
+      last_review: '2026-07-19'
+    - domain: Research ethics
+      weight: 15
+      question_type: Multiple choice
+      priority: C
+      confidence: 4
+      last_review: '2026-07-02'
+  high_yield:
+    - Herzberg's two-factor asymmetry
+    - Reliability vs validity
+  weak:
+    - Distinguishing Vroom's three components
+    - Construct vs criterion validity
+  volatile:
+    - Ethical guidance is reissued periodically — check the current edition
+
+topics:
+  # ---------------------------------------------------------------- topic 01
+  - id: motivation-theories
+    title: Content and process theories of motivation
+    archetype: concept
+    importance: A
+    frequency: Every paper
+    why: >-
+      The paper describes a workplace scenario and asks which theory explains it.
+      Every distractor is a real theory applied to the wrong cue.
+    core_question: Which theory does this scenario's specific cue point to?
+    key_axis: What the theory claims motivation is made of
+    prerequisites: [Intrinsic vs extrinsic motivation]
+    sources: ['Reading list ch. 4']
+    updated: '2026-08-05'
+    one_sentence: >-
+      Content theories say motivation comes from which needs are unmet, while
+      process theories say it comes from how people reason about effort, reward
+      and fairness.
+    essentials:
+      - Herzberg's hygiene factors cause dissatisfaction when absent but do not motivate when present.
+      - Maslow claims strict prepotency; Alderfer's ERG explicitly allows regression.
+      - Expectancy theory is multiplicative — any term at zero gives zero motivation.
+      - Equity theory is about a ratio comparison, not about absolute reward.
+      - McClelland's needs are learned, not innate.
+
+    matrix:
+      row_label: Theory
+      columns:
+        - { key: family,   label: Family,            mark: distinction }
+        - { key: claim,    label: Core claim,        mark: core }
+        - { key: cue,      label: Scenario cue,      mark: evidence }
+        - { key: limit,    label: What it does NOT claim, mark: exception }
+        - { key: trap,     label: Exam trap,         mark: trap }
+      rows:
+        - label: Maslow
+          sub: Hierarchy of needs
+          cells:
+            family: Content
+            claim: Needs are satisfied in a fixed ascending order
+            cue: '"…only became interested in recognition once job security improved"'
+            limit: { v: Does not allow moving back down the hierarchy, mark: exception }
+            trap: { v: "Scenarios showing regression point to ERG, not Maslow", mark: trap }
+        - label: Alderfer
+          sub: ERG
+          cells:
+            family: Content
+            claim: Existence, relatedness, growth — with a frustration-regression path
+            cue: '"…blocked from promotion, the employee refocused on team relationships"'
+            limit: Does not require needs to be met in order
+            trap: Chosen only when regression is described; otherwise Maslow
+        - label: Herzberg
+          sub: Two-factor
+          cells:
+            family: Content
+            claim: Satisfaction and dissatisfaction have different causes
+            cue: '"…pay was fixed, but staff still reported no sense of achievement"'
+            limit: { v: Does not claim hygiene factors motivate when improved, mark: exception }
+            trap: { v: "Treating the two factors as opposite ends of one scale", mark: trap }
+        - label: McClelland
+          sub: Acquired needs
+          cells:
+            family: Content
+            claim: Achievement, affiliation and power needs, learned through experience
+            cue: '"…consistently chooses moderately difficult targets"'
+            limit: Does not claim the needs are universal or innate
+            trap: { v: Described as innate rather than acquired, mark: trap }
+        - label: Vroom
+          sub: Expectancy
+          cells:
+            family: { v: Process, mark: distinction }
+            claim: Motivation = Expectancy × Instrumentality × Valence
+            cue: '"…believed the effort was possible but doubted the bonus would follow"'
+            limit: Does not treat the terms as additive
+            trap: { v: Additive phrasing in the stem makes the option wrong, mark: trap }
+        - label: Adams
+          sub: Equity
+          cells:
+            family: { v: Process, mark: distinction }
+            claim: People compare their input/outcome ratio with a referent
+            cue: '"…was satisfied until learning what a peer earned"'
+            limit: Does not predict from absolute reward level alone
+            trap: Confused with expectancy when a reward is mentioned at all
+
+    decisive:
+      answer: >-
+        Whether the theory names the contents of motivation (which needs) or the
+        reasoning that produces it (how the person evaluates effort and reward).
+        Content theories answer "what", process theories answer "how".
+      pairs:
+        - a: Maslow
+          b: Alderfer (ERG)
+          why: Both are ascending need hierarchies with overlapping categories.
+          clue: Any description of moving *back down* after frustration is ERG. Maslow forbids it.
+        - a: Herzberg hygiene
+          b: Herzberg motivator
+          why: Both are called "factors" and both affect how people feel about work.
+          clue: If removing it causes complaints but adding it causes nothing, it is hygiene.
+        - a: Vroom
+          b: Adams
+          why: Both are process theories and both mention reward.
+          clue: A comparison with another person is Adams. A judgement about one's own effort chain is Vroom.
+
+    traps:
+      - cue: Improving pay and working conditions will increase motivation.
+        usually: 'False, in Herzberg terms'
+        exception: It removes dissatisfaction; motivation requires achievement, recognition, responsibility
+        why: Everyday usage treats "satisfied" and "motivated" as the same thing.
+        source: Reading list ch. 4
+      - cue: A person must satisfy lower needs before higher ones become active.
+        usually: 'True for Maslow'
+        exception: Not for ERG, which permits simultaneous activation and regression
+        why: The stem rarely names the theorist — you must infer it from the cue.
+        source: Reading list ch. 4
+      - cue: High valence alone produces high motivation.
+        usually: 'False'
+        exception: Expectancy is multiplicative — zero expectancy gives zero motivation
+        why: Wanting the reward feels sufficient, so the other two terms are ignored.
+        source: Reading list ch. 4
+
+    evidence:
+      - cell: { row: Herzberg, column: limit }
+        source: Reading list ch. 4
+        exam: Sample 2024
+        question: Q12
+        tested_as: '"…the absence of hygiene factors causes dissatisfaction"'
+        risk: high
+      - cell: { row: Vroom, column: claim }
+        source: Reading list ch. 4
+        exam: Sample 2022
+        question: Q31
+        tested_as: '"…the product of expectancy, instrumentality and valence"'
+        risk: mid
+
+  # ---------------------------------------------------------------- topic 02
+  - id: reliability-validity
+    title: Reliability and validity
+    archetype: concept
+    importance: A
+    frequency: 5 of last 5 papers
+    why: >-
+      The two words are near-synonyms in ordinary English and technical opposites
+      in psychometrics. Almost every candidate loses at least one mark here.
+    core_question: Is the instrument consistent, or is it measuring the right thing?
+    key_axis: Consistency vs correctness
+    prerequisites: [Correlation coefficient]
+    sources: ['Reading list ch. 9']
+    updated: '2026-08-06'
+    one_sentence: >-
+      Reliability is consistency of measurement and validity is whether the thing
+      measured is the thing intended; a test can be perfectly reliable and
+      completely invalid, but never valid without being reliable.
+    essentials:
+      - Reliability is necessary but not sufficient for validity.
+      - Test-retest reliability is threatened by practice effects.
+      - Face validity is about appearance and carries no statistical weight.
+      - Construct validity is established over many studies, not by one coefficient.
+      - Increasing test length generally raises reliability.
+
+    matrix:
+      row_label: Concept
+      columns:
+        - { key: question, label: Question it answers, mark: distinction }
+        - { key: measured, label: How it is evidenced, mark: core }
+        - { key: threat,   label: Main threat,         mark: exception }
+        - { key: trap,     label: Exam trap,           mark: trap }
+      rows:
+        - label: Test-retest reliability
+          cells:
+            question: Is it stable over time?
+            measured: Correlation between two administrations
+            threat: { v: Practice and memory effects inflate it, mark: exception }
+            trap: Interval length is rarely stated but changes the interpretation
+        - label: Internal consistency
+          cells:
+            question: Do the items hang together?
+            measured: Cronbach's alpha, split-half
+            threat: { v: Alpha rises with test length even without improvement, mark: exception }
+            trap: { v: Reading high alpha as evidence of unidimensionality, mark: trap }
+        - label: Inter-rater reliability
+          cells:
+            question: Do different raters agree?
+            measured: Cohen's kappa, correlation between raters
+            threat: Rater drift over a long scoring session
+            trap: Confused with parallel-forms reliability
+        - label: Content validity
+          cells:
+            question: Does it cover the whole domain?
+            measured: Expert judgement against a specification
+            threat: An incomplete domain specification
+            trap: { v: "Confused with face validity, which is about appearance only", mark: trap }
+        - label: Criterion validity
+          cells:
+            question: Does it predict the outcome?
+            measured: Correlation with an external criterion
+            threat: { v: Range restriction attenuates the coefficient, mark: exception }
+            trap: Predictive and concurrent differ only in timing
+        - label: Construct validity
+          cells:
+            question: Does it measure the intended construct?
+            measured: Convergent and discriminant evidence, accumulated
+            threat: A poorly defined construct
+            trap: { v: Expecting a single number — it is a body of evidence, mark: trap }
+
+    decisive:
+      answer: >-
+        Reliability asks whether repeated measurement agrees with itself.
+        Validity asks whether it agrees with reality. Only validity requires
+        anything outside the test.
+      pairs:
+        - a: Reliability
+          b: Validity
+          why: In ordinary English both mean roughly "trustworthy".
+          clue: If the evidence comes from inside the test alone, it is reliability.
+        - a: Face validity
+          b: Content validity
+          why: Both concern whether the test "looks right".
+          clue: Face validity is judged by the test-taker; content validity by experts against a specification.
+
+    traps:
+      - cue: A highly reliable test is a good test.
+        usually: 'Incomplete'
+        exception: A reliable test can measure the wrong construct with perfect consistency
+        why: Reliability is easy to quantify, so it becomes a proxy for quality.
+        source: Reading list ch. 9
+      - cue: Cronbach's alpha above 0.9 indicates an excellent scale.
+        usually: 'Often stated'
+        exception: Very high alpha can indicate redundant items rather than quality
+        why: Higher is assumed better without a ceiling.
+        source: Reading list ch. 9
+
+    evidence:
+      - cell: { row: Construct validity, column: measured }
+        source: Reading list ch. 9
+        exam: Sample 2025
+        question: Q8
+        tested_as: '"…convergent and discriminant evidence"'
+        risk: high
+
+error_log:
+  - date: '2026-08-05'
+    question: Sample 2024 Q12
+    topic: Motivation
+    mine: Motivators
+    correct: Hygiene factors
+    error_type: wording-misread
+    missing_distinction: Absence causing dissatisfaction is the hygiene signature
+    matrix_update: { topic: motivation-theories, row: Herzberg, column: limit }
+    retest: '2026-08-19'
+  - date: '2026-08-06'
+    question: Sample 2025 Q8
+    topic: Psychometrics
+    mine: Criterion validity
+    correct: Construct validity
+    error_type: confused-pair
+    missing_distinction: Convergent/discriminant evidence belongs to construct validity
+    matrix_update: { topic: reliability-validity, row: Construct validity, column: measured }
+    retest: '2026-08-20'
+
+compression:
+  l2:
+    - item: Content vs process
+      detail: What motivation is made of vs how it is reasoned about.
+      mark: distinction
+    - item: Regression
+      detail: ERG allows it. Maslow does not.
+      mark: distinction
+    - item: Herzberg asymmetry
+      detail: Hygiene removes dissatisfaction. It does not motivate.
+      mark: trap
+    - item: Expectancy
+      detail: Multiplicative. One zero term zeroes the whole thing.
+      mark: trap
+    - item: Reliability and validity
+      detail: Reliable but invalid is possible. Valid but unreliable is not.
+      mark: distinction
+    - item: Construct validity
+      detail: A body of evidence, never a single coefficient.
+      mark: trap
+  l3:
+    - Regression described - ERG
+    - Comparison with a peer - Adams
+    - Own effort chain - Vroom
+    - Hygiene removes dissatisfaction only
+    - Expectancy is multiplicative
+    - McClelland - learned, not innate
+    - Reliable can be invalid
+    - Valid cannot be unreliable
+    - Face validity - appearance, no weight
+    - Construct validity - accumulated evidence
+
+blank_rows:
+  error_log: 9

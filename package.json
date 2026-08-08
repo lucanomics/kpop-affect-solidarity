@@ -1,0 +1,20 @@
+{
+  "name": "exam-matrix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Exam Matrix — a discrimination-and-retrieval PDF study-note system for certification exams",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "build:blank": "node scripts/build-blank.js",
+    "build:editor": "node scripts/build-editor.js",
+    "build:all": "node scripts/build.js && node scripts/build-blank.js && node scripts/build-editor.js",
+    "init": "node scripts/init-exam.js",
+    "qa": "node scripts/visual-qa.js"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "js-yaml": "^4.1.0",
+    "playwright-core": "^1.56.1"
+  }
+}

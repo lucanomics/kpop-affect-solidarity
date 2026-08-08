@@ -1,0 +1,316 @@
+# ---------------------------------------------------------------------------
+# SAMPLE DATA — 템플릿 시연용입니다. 법률 자문이 아니며, 실제 수험 준비 전에
+# 반드시 현행 법령 원문으로 검증하십시오. 법령은 개정됩니다.
+# SAMPLE DATA — demonstrates the `law` archetype. Not legal advice.
+# ---------------------------------------------------------------------------
+
+exam:
+  name: 행정사 1차 · 행정법
+  name_sub: Certified Administrative Agent — Administrative Law (sample)
+  lang: ko
+  authority: 한국산업인력공단
+  date: '2026-11-14'
+  syllabus_version: '2026년 시행 출제기준 (샘플 · 검증 필요)'
+  passing: 과목당 40점 이상, 전과목 평균 60점 이상
+  target_score: 75
+  confidence: 2
+  last_updated: '2026-08-07'
+  subjects:
+    - 행정법총론
+    - 행정법각론
+    - 행정절차 및 행정쟁송
+  sources:
+    - 국가법령정보센터 (law.go.kr) — 조문 원문
+    - 최근 5개년 기출문제
+  what_it_tests:
+    - 제도의 이름이 아니라 요건·효과·기간을 정확히 구분하는지
+    - 원칙을 아는지가 아니라 예외를 아는지 — 선지는 거의 항상 예외에서 갈린다
+    - 조문의 문언을 그대로 기억하는지 (평가원식 표현 그대로 출제됨)
+    - 유사 제도 간 관할·기간·불복방법을 뒤섞어도 걸러내는지
+  blueprint:
+    - domain: 행정법 서론 · 법원칙
+      weight: 15
+      question_type: 5지선다 6문항
+      priority: B
+      confidence: 3
+      last_review: '2026-07-18'
+    - domain: 행정작용법 (처분 · 재량)
+      weight: 30
+      question_type: 5지선다 12문항
+      priority: A
+      confidence: 2
+      last_review: '2026-07-25'
+    - domain: 행정절차 · 정보공개
+      weight: 20
+      question_type: 5지선다 8문항
+      priority: B
+      confidence: 3
+      last_review: '2026-07-11'
+    - domain: 행정쟁송 (심판 · 소송)
+      weight: 35
+      question_type: 5지선다 14문항
+      priority: A
+      confidence: 2
+      last_review: '2026-08-02'
+  high_yield:
+    - 행정심판과 행정소송의 관할·기간 구분
+    - 집행정지 요건
+    - 처분성 인정 여부
+  weak:
+    - 제소기간 기산점
+    - 사정재결 · 사정판결
+  volatile:
+    - 행정기본법 시행 이후 변경된 제척기간
+    - 온라인 행정심판 절차 관련 개정
+
+topics:
+  # ---------------------------------------------------------------- topic 01
+  - id: admin-remedies
+    title: 행정심판 · 행정소송 · 이의신청
+    archetype: law
+    importance: A
+    frequency: 최근 5개년 중 5회 출제
+    why: >-
+      세 제도가 이름은 비슷하지만 관할·기간·불복방법이 전부 다르다.
+      출제자는 한 제도의 요건을 다른 제도에 붙여 오답 선지를 만든다.
+    core_question: 이 사안에서 어느 절차를, 언제까지, 누구에게 제기해야 하는가?
+    key_axis: 판단 주체 (행정부 내부 / 법원) × 기간
+    prerequisites: [처분의 개념, 처분성]
+    sources: ['행정심판법', '행정소송법', '행정기본법']
+    updated: '2026-08-02'
+    one_sentence: >-
+      행정심판은 행정부가 스스로 위법·부당을 다시 판단하는 절차이고,
+      행정소송은 법원이 위법성만을 판단하는 절차이며, 이의신청은 처분청에 직접
+      재검토를 구하는 약식 절차다.
+    essentials:
+      - 행정심판은 위법 + 부당까지, 행정소송은 위법만 심판한다.
+      - 취소소송 제소기간은 안 날 90일 / 있은 날 1년, 둘 중 먼저 도래하는 때.
+      - 행정심판을 거친 경우 제소기간은 재결서 송달일부터 다시 기산한다.
+      - 집행정지는 원칙적으로 인정되지 않으며 신청에 의해 예외적으로 허용된다.
+      - 이의신청 결과에 불복해도 행정심판·행정소송을 별도로 제기할 수 있다.
+
+    matrix:
+      row_label: 제도
+      note: 열이 10개이므로 자동으로 두 페이지로 분할됩니다 (열 축소 아님).
+      columns:
+        - { key: nature,     label_ko: 성질,            mark: core }
+        - { key: body,       label_ko: 판단 기관,       mark: distinction }
+        - { key: object,     label_ko: 심판 대상,       mark: distinction }
+        - { key: period,     label_ko: 청구 · 제소기간, mark: trap }
+        - { key: suspensive, label_ko: 집행정지,        mark: distinction }
+        - { key: scope,      label_ko: 심리 범위,       mark: distinction }
+        - { key: decision,   label_ko: 결정의 명칭,     mark: core }
+        - { key: remedy,     label_ko: 불복 방법,       mark: core }
+        - { key: exception,  label_ko: 예외,            mark: exception }
+        - { key: basis,      label_ko: 근거 조문,       mark: evidence }
+      rows:
+        - label: 행정심판
+          sub: 행정부 내부 통제
+          cells:
+            nature: 행정기관에 의한 약식 쟁송
+            body: 행정심판위원회
+            object: 위법 또는 부당한 처분 · 부작위
+            period: 안 날 90일 / 있은 날 180일
+            suspensive: 위원회 직권 또는 신청에 의해 가능
+            scope: 위법성 + 부당성 (합목적성 포함)
+            decision: 재결
+            remedy: 재결에 불복 시 행정소송
+            exception: { v: 재결 자체에 고유한 위법이 있으면 재결도 소송 대상, mark: exception }
+            basis: 행정심판법 §27, §30
+        - label: 행정소송 (취소소송)
+          sub: 사법부에 의한 통제
+          cells:
+            nature: 법원에 의한 정식 쟁송
+            body: 행정법원 (관할 법원)
+            object: 위법한 처분 · 부작위
+            period: { v: 안 날 90일 / 있은 날 1년 — 먼저 도래하는 때, mark: trap }
+            suspensive: 신청에 의해 예외적 인정 (회복하기 어려운 손해 등)
+            scope: 위법성만 — 부당성은 심판 대상 아님
+            decision: 판결
+            remedy: 항소 · 상고
+            exception: { v: 정당한 사유가 있으면 기간 도과에도 제소 가능, mark: exception }
+            basis: 행정소송법 §20, §23
+        - label: 이의신청
+          sub: 처분청에 대한 재검토 요구
+          cells:
+            nature: 처분청 자체에 대한 약식 불복
+            body: 처분을 한 행정청
+            object: 개별법이 정한 처분
+            period: { v: 개별법마다 상이 — 통상 30~90일, mark: trap }
+            suspensive: 원칙적으로 없음
+            scope: 개별법이 정한 범위
+            decision: 결정 · 통지
+            remedy: 행정심판 · 행정소송 별도 제기 가능
+            exception: { v: 이의신청을 거쳐도 제소기간은 원처분 기준이 원칙, mark: trap }
+            basis: 행정기본법 §36, 각 개별법
+
+    decisive:
+      answer: >-
+        판단 주체가 행정부인가 법원인가. 행정부가 판단하면 '부당'까지 볼 수 있고,
+        법원이 판단하면 '위법'만 본다. 나머지 차이는 전부 여기서 파생된다.
+      pairs:
+        - a: 행정심판
+          b: 행정소송
+          why: 둘 다 처분을 다투고, 기간도 '안 날 90일'로 앞부분이 같다.
+          clue: 뒷부분 기간이 다르다 — 심판 180일 / 소송 1년. 그리고 '부당' 언급이 있으면 심판.
+        - a: 이의신청
+          b: 행정심판
+          why: 둘 다 행정부 내부 절차이고 이름이 비슷하다.
+          clue: 판단 주체가 '처분청 자신'이면 이의신청, '위원회'면 행정심판.
+
+    traps:
+      - cue: 행정심판을 거치지 않으면 행정소송을 제기할 수 없다.
+        usually: 거짓
+        exception: 개별법이 필요적 전치를 규정한 경우에만 참 (예 - 국세기본법)
+        why: 과거 필요적 전치주의를 기억하는 수험생이 그대로 답한다. 현재는 임의적 전치가 원칙.
+        source: 행정소송법 §18
+      - cue: 취소소송을 제기하면 처분의 효력이 정지된다.
+        usually: 거짓
+        exception: 별도로 집행정지를 신청하고 요건이 인정된 경우에만 정지
+        why: "'소송을 걸었으니 멈추겠지'라는 상식이 조문과 반대다."
+        source: 행정소송법 §23①
+      - cue: 제소기간은 처분이 있은 날부터 1년이다.
+        usually: 참
+        exception: 안 날부터 90일이 먼저 도래하면 그 시점에 소멸
+        why: 두 기간 중 '먼저 도래하는 때'라는 문언을 빠뜨린 선지가 자주 나온다.
+        source: 행정소송법 §20
+
+    evidence:
+      - cell: { row: 행정소송 (취소소송), column: period }
+        source: 행정소송법 §20
+        exam: 샘플 2024
+        question: 문 27
+        tested_as: '"처분이 있음을 안 날부터 90일 이내에 제기하여야 한다"'
+        risk: high
+      - cell: { row: 행정심판, column: scope }
+        source: 행정심판법 §1
+        exam: 샘플 2023
+        question: 문 31
+        tested_as: '"위법 또는 부당한 처분"'
+        risk: mid
+
+  # ---------------------------------------------------------------- topic 02
+  - id: suspension-requirements
+    title: 집행정지의 요건
+    archetype: law
+    importance: A
+    frequency: 최근 5개년 중 3회 출제
+    why: 요건이 네 개뿐이라 통째로 출제하기 좋고, 하나만 바꿔도 오답 선지가 된다.
+    core_question: 어떤 요건이 갖추어져야 처분의 효력이 멈추는가?
+    key_axis: 적극적 요건 / 소극적 요건
+    sources: ['행정소송법 §23']
+    updated: '2026-07-25'
+    one_sentence: >-
+      집행정지는 본안이 계속 중이고 회복하기 어려운 손해를 예방할 긴급한 필요가
+      있을 때, 공공복리를 해치지 않고 본안이 명백히 이유 없지 않은 경우에만 허용된다.
+    essentials:
+      - 본안소송이 계속 중이어야 한다 — 소송 없이 집행정지만 신청할 수 없다.
+      - "'회복하기 어려운 손해'는 금전배상으로 회복이 곤란한 손해를 뜻한다."
+      - 공공복리에 중대한 영향을 줄 우려가 없어야 한다 (소극적 요건).
+      - 본안청구가 이유 없음이 명백하지 않아야 한다.
+      - 집행정지는 효력정지 · 집행정지 · 절차속행정지로 나뉜다.
+
+    matrix:
+      row_label: 요건
+      columns:
+        - { key: kind,    label_ko: 구분,        mark: distinction }
+        - { key: content, label_ko: 내용,        mark: core }
+        - { key: burden,  label_ko: 소명 책임,   mark: trap }
+        - { key: note,    label_ko: 함정 포인트, mark: trap }
+      rows:
+        - label: 본안 계속
+          cells:
+            kind: 적극적 요건
+            content: 취소소송 등 본안이 법원에 계속되어 있을 것
+            burden: 신청인
+            note: { v: 본안 제기 전 단독 신청은 부적법, mark: trap }
+        - label: 회복하기 어려운 손해
+          cells:
+            kind: 적극적 요건
+            content: 금전배상으로 회복이 곤란한 손해
+            burden: 신청인
+            note: 단순한 경제적 손실은 원칙적으로 해당하지 않음
+        - label: 긴급한 필요
+          cells:
+            kind: 적극적 요건
+            content: 본안판결을 기다릴 여유가 없을 것
+            burden: 신청인
+            note: 손해 요건과 묶여 함께 판단됨
+        - label: 공공복리 저해 없음
+          cells:
+            kind: { v: 소극적 요건, mark: exception }
+            content: 공공복리에 중대한 영향을 줄 우려가 없을 것
+            burden: { v: 행정청, mark: trap }
+            note: { v: 소명 책임이 신청인이 아니라 행정청 — 자주 뒤바뀌어 출제, mark: trap }
+        - label: 본안 이유 없음이 명백하지 않을 것
+          cells:
+            kind: { v: 소극적 요건, mark: exception }
+            content: 본안청구가 명백히 이유 없는 경우가 아닐 것
+            burden: 행정청
+            note: 판례가 인정한 요건 — 조문에 명시되어 있지 않음
+
+    decisive:
+      answer: >-
+        누가 소명해야 하는가. 적극적 요건은 신청인이, 소극적 요건은 행정청이
+        소명한다. 선지가 이 방향을 뒤집으면 오답이다.
+      pairs:
+        - a: 적극적 요건
+          b: 소극적 요건
+          why: 다섯 개를 나열식으로 외우면 구분이 사라진다.
+          clue: "'없을 것'으로 끝나면 소극적 요건이고 소명 책임은 행정청이다."
+
+    traps:
+      - cue: 집행정지의 모든 요건은 신청인이 소명해야 한다.
+        usually: 거짓
+        exception: 공공복리 저해 우려는 행정청이 소명한다
+        why: 신청인이 신청했으니 전부 신청인 부담이라고 생각하기 쉽다.
+        source: 판례
+
+error_log:
+  - date: '2026-07-28'
+    question: 모의 3회 문 27
+    topic: 행정심판 · 행정소송
+    mine: 1년
+    correct: 90일 또는 1년 중 먼저
+    error_type: exception-forgotten
+    missing_distinction: 두 기간 중 '먼저 도래하는 때'라는 문언을 빠뜨림
+    matrix_update: { topic: admin-remedies, row: 행정소송 (취소소송), column: period }
+    retest: '2026-08-11'
+  - date: '2026-08-01'
+    question: 모의 4회 문 12
+    topic: 집행정지
+    mine: 신청인
+    correct: 행정청
+    error_type: confused-pair
+    missing_distinction: 적극적 / 소극적 요건에 따라 소명 책임이 갈린다는 점
+    matrix_update: { topic: suspension-requirements, row: 공공복리 저해 없음, column: burden }
+    retest: '2026-08-14'
+
+compression:
+  l2:
+    - item: 제소기간
+      detail: 안 날 90일 / 있은 날 1년 — 먼저 도래하는 때. 심판은 90일 / 180일.
+      mark: trap
+    - item: 심리 범위
+      detail: 심판 = 위법 + 부당 / 소송 = 위법만
+      mark: distinction
+    - item: 집행정지
+      detail: 소 제기만으로는 정지되지 않는다. 별도 신청 필요.
+      mark: trap
+    - item: 소극적 요건의 소명 책임
+      detail: 공공복리 저해 우려는 행정청이 소명
+      mark: trap
+    - item: 행정심판 전치
+      detail: 임의적 전치가 원칙. 필요적 전치는 개별법에 규정된 경우만.
+      mark: exception
+  l3:
+    - 90일 / 1년 — 먼저 도래하는 때
+    - 심판 180일, 소송 1년 (뒷자리가 다르다)
+    - 부당까지 = 심판, 위법만 = 소송
+    - 소 제기 ≠ 집행정지
+    - 공공복리 요건은 행정청이 소명
+    - 재결 고유의 위법 = 재결도 소송 대상
+    - 전치주의는 임의적이 원칙
+
+blank_rows:
+  error_log: 12

@@ -1,0 +1,325 @@
+# ---------------------------------------------------------------------------
+# SAMPLE DATA — demonstrates the `calculation` archetype in English.
+# Illustrative only. Verify every formula against your own curriculum before use.
+#
+# Note how the discrimination shifts for a calculation exam: the columns ask
+# "which method, when, and what breaks it" rather than "what does it mean".
+# ---------------------------------------------------------------------------
+
+exam:
+  name: Capital Budgeting & Asset Accounting
+  name_sub: Finance certification — quantitative section (sample)
+  lang: en
+  authority: Sample Examining Board
+  date: '2026-12-05'
+  syllabus_version: '2026 curriculum, Reading 21–24 (sample — verify)'
+  passing: 70% overall, no section below 50%
+  target_score: 85
+  confidence: 3
+  last_updated: '2026-08-07'
+  subjects:
+    - Corporate finance
+    - Financial reporting
+    - Quantitative methods
+  sources:
+    - Official curriculum readings
+    - Past papers 2021–2025
+  what_it_tests:
+    - Whether you pick the right method under a stated constraint, not whether you can recite it
+    - Whether you notice the assumption that makes a method invalid
+    - Unit and sign discipline under time pressure
+    - Whether you can rank projects when two methods disagree
+  blueprint:
+    - domain: Capital budgeting
+      weight: 35
+      question_type: Item set, 6 vignettes
+      priority: A
+      confidence: 3
+      last_review: '2026-07-29'
+    - domain: Cost of capital
+      weight: 20
+      question_type: Multiple choice
+      priority: B
+      confidence: 4
+      last_review: '2026-07-15'
+    - domain: Long-lived assets
+      weight: 25
+      question_type: Item set, 4 vignettes
+      priority: A
+      confidence: 2
+      last_review: '2026-08-04'
+    - domain: Working capital
+      weight: 20
+      question_type: Multiple choice
+      priority: C
+      confidence: 4
+      last_review: '2026-06-30'
+  high_yield:
+    - NPV vs IRR conflict on mutually exclusive projects
+    - Depreciation effect on early-year net income
+  weak:
+    - Multiple IRR under non-conventional cash flows
+    - Units-of-production with revised estimates
+  volatile:
+    - Any change to the standard-setter guidance on componentisation
+
+topics:
+  # ---------------------------------------------------------------- topic 01
+  - id: capital-budgeting
+    title: Capital budgeting decision rules
+    archetype: calculation
+    importance: A
+    frequency: Every paper, 2021–2025
+    why: >-
+      Four rules that usually agree and occasionally do not. The exam lives
+      entirely in the cases where they disagree, and asks which one you trust.
+    core_question: When these methods rank two projects differently, which one is right and why?
+    key_axis: What each method assumes about reinvestment and scale
+    prerequisites: [Time value of money, WACC]
+    sources: ['Curriculum reading 21']
+    updated: '2026-07-29'
+    one_sentence: >-
+      NPV measures value added in currency and is always correct for mutually
+      exclusive projects; the others are shortcuts that fail in a specific,
+      predictable way.
+    essentials:
+      - NPV assumes reinvestment at the cost of capital; IRR assumes reinvestment at the IRR.
+      - For mutually exclusive projects, always follow NPV when the two conflict.
+      - Non-conventional cash flows can produce multiple IRRs, or none.
+      - Payback ignores everything after the cutoff and ignores time value entirely.
+      - PI and NPV always agree on accept/reject; they can disagree on ranking.
+
+    matrix:
+      row_label: Method
+      columns:
+        - { key: gives,   label: What it gives you, mark: core }
+        - { key: rule,    label: Decision rule,     mark: core }
+        - { key: assumes, label: Key assumption,    mark: distinction }
+        - { key: when,    label: When to use it,    mark: distinction }
+        - { key: breaks,  label: When it breaks,    mark: exception }
+        - { key: mistake, label: Common mistake,    mark: trap }
+      rows:
+        - label: NPV
+          sub: Net present value
+          cells:
+            gives: Value added, in currency
+            rule: Accept if NPV > 0
+            assumes: { v: Reinvestment at the cost of capital, mark: distinction }
+            when: Default. Always correct for mutually exclusive choices.
+            breaks: Under hard capital rationing, ranking by NPV alone can waste budget
+            mistake: { v: Discounting at the IRR instead of the WACC, mark: trap }
+        - label: IRR
+          sub: Internal rate of return
+          cells:
+            gives: A percentage return
+            rule: Accept if IRR > required return
+            assumes: { v: Reinvestment at the IRR itself — usually unrealistic, mark: distinction }
+            when: Independent projects with conventional cash flows
+            breaks: { v: Non-conventional cash flows → multiple or no IRR, mark: exception }
+            mistake: { v: Using IRR to rank mutually exclusive projects of different scale, mark: trap }
+        - label: Payback
+          sub: Payback period
+          cells:
+            gives: Time to recover the outlay
+            rule: Accept if below the chosen cutoff
+            assumes: Nothing about time value at all
+            when: Rough liquidity screen only
+            breaks: { v: Ignores every cash flow after the cutoff, mark: exception }
+            mistake: { v: Treating a short payback as evidence of profitability, mark: trap }
+        - label: PI
+          sub: Profitability index
+          cells:
+            gives: PV of inflows per unit of outlay
+            rule: Accept if PI > 1
+            assumes: Same as NPV
+            when: Capital rationing — ranking by value per unit of scarce capital
+            breaks: Can rank against NPV when project scales differ
+            mistake: { v: Forgetting that PI > 1 and NPV > 0 are the same condition, mark: trap }
+
+    decisive:
+      answer: >-
+        What the method assumes you do with the money that comes back. NPV
+        assumes you earn the cost of capital on it; IRR assumes you earn the
+        IRR. Every ranking conflict between them traces to that one assumption.
+      pairs:
+        - a: NPV
+          b: IRR
+          why: They agree on accept/reject for a single conventional project, so students assume they always agree.
+          clue: If the projects are mutually exclusive or differ in scale or timing, follow NPV.
+        - a: PI
+          b: NPV
+          why: Both are NPV-based, so they are assumed interchangeable.
+          clue: PI is a ratio. Ratios rank by efficiency, not by size — that is the whole difference.
+
+    traps:
+      - cue: The project with the higher IRR should be selected.
+        usually: 'True for independent projects'
+        exception: False for mutually exclusive projects — select on NPV
+        why: The percentage feels more comparable than a currency amount.
+        source: Reading 21
+      - cue: A project with a positive NPV always has an IRR above the cost of capital.
+        usually: 'True'
+        exception: Not defined when cash flows are non-conventional and no real IRR exists
+        why: Students generalise from the conventional single-sign-change case.
+        source: Reading 21
+      - cue: Discounted payback fixes the flaws of payback.
+        usually: 'Partly true'
+        exception: It corrects for time value but still ignores all cash flows after the cutoff
+        why: '"Discounted" is read as "now it is a proper NPV method".'
+        source: Reading 21
+
+    evidence:
+      - cell: { row: IRR, column: mistake }
+        source: Reading 21
+        exam: Sample 2024
+        question: Item set 3, Q2
+        tested_as: '"…the analyst should select Project B because its IRR is higher"'
+        risk: high
+      - cell: { row: Payback, column: breaks }
+        source: Reading 21
+        exam: Sample 2023
+        question: Q17
+        tested_as: '"…does not consider cash flows beyond the payback period"'
+        risk: mid
+
+  # ---------------------------------------------------------------- topic 02
+  - id: depreciation
+    title: Depreciation methods
+    archetype: calculation
+    importance: A
+    frequency: 4 of last 5 papers
+    why: >-
+      The arithmetic is easy; the exam tests which line of the financial
+      statements moves, in which direction, in which year.
+    core_question: In the first year, which method reports the lowest net income — and why does that reverse later?
+    key_axis: Front-loaded vs straight-line expense recognition
+    prerequisites: [Carrying amount, Salvage value]
+    sources: ['Curriculum reading 24']
+    updated: '2026-08-04'
+    one_sentence: >-
+      Accelerated methods move expense into early years, so early net income and
+      early carrying amount are lower, and both reverse before the asset's life ends.
+    essentials:
+      - Total depreciation over the asset's life is identical under every method.
+      - DDB ignores salvage value in the rate but cannot depreciate below it.
+      - Straight line gives the lowest first-year expense of the three.
+      - Units-of-production tracks usage, so it is the only method insensitive to time.
+      - A change of estimate is applied prospectively, never by restating prior years.
+
+    matrix:
+      row_label: Method
+      columns:
+        - { key: formula,  label: Formula,             mark: core }
+        - { key: salvage,  label: Salvage treatment,   mark: trap }
+        - { key: early,    label: Early-year expense,  mark: distinction }
+        - { key: mistake,  label: Common mistake,      mark: trap }
+      rows:
+        - label: Straight line
+          cells:
+            formula: (Cost − Salvage) ÷ Useful life
+            salvage: Subtracted up front
+            early: { v: Lowest, mark: distinction }
+            mistake: Using it as the default when the vignette states usage-based consumption
+        - label: Double declining balance
+          sub: DDB
+          cells:
+            formula: 2 ÷ Useful life × Beginning carrying amount
+            salvage: { v: "Excluded from the rate, but is a floor", mark: trap }
+            early: { v: Highest, mark: distinction }
+            mistake: { v: Subtracting salvage before applying the rate, mark: trap }
+        - label: Sum-of-years digits
+          sub: SYD
+          cells:
+            formula: (Cost − Salvage) × Remaining life ÷ Sum of years
+            salvage: Subtracted up front
+            early: High, but less front-loaded than DDB
+            mistake: Using remaining life for the numerator of the wrong year
+        - label: Units of production
+          cells:
+            formula: (Cost − Salvage) × Units this period ÷ Total estimated units
+            salvage: Subtracted up front
+            early: { v: "Depends on usage, not on time", mark: exception }
+            mistake: { v: Failing to revise the rate when total estimated units change, mark: trap }
+
+    decisive:
+      answer: >-
+        Whether salvage value enters the calculation at the start. Every method
+        subtracts it up front except DDB, which uses it only as a floor.
+      pairs:
+        - a: DDB
+          b: SYD
+          why: Both are accelerated, so they are treated as interchangeable.
+          clue: If salvage is missing from the first-year computation, it is DDB.
+
+    traps:
+      - cue: Accelerated depreciation reduces total reported income.
+        usually: 'False'
+        exception: It only shifts income between periods — the lifetime total is unchanged
+        why: Lower early income is mistaken for lower total income.
+        source: Reading 24
+      - cue: A change in useful life requires restating prior periods.
+        usually: 'False'
+        exception: It is a change in estimate, applied prospectively
+        why: Confused with a change in accounting policy, which can require restatement.
+        source: Reading 24
+
+    evidence:
+      - cell: { row: Double declining balance, column: salvage }
+        source: Reading 24
+        exam: Sample 2025
+        question: Item set 2, Q4
+        tested_as: '"…applies the rate to the carrying amount at the beginning of the period"'
+        risk: high
+
+error_log:
+  - date: '2026-07-31'
+    question: Sample 2024, Item set 3 Q2
+    topic: Capital budgeting
+    mine: Project B (higher IRR)
+    correct: Project A (higher NPV)
+    error_type: confused-pair
+    missing_distinction: Mutually exclusive → NPV governs, regardless of IRR
+    matrix_update: { topic: capital-budgeting, row: IRR, column: mistake }
+    retest: '2026-08-14'
+  - date: '2026-08-04'
+    question: Sample 2025, Item set 2 Q4
+    topic: Depreciation
+    mine: (Cost − Salvage) × 2/n
+    correct: Carrying amount × 2/n
+    error_type: formula-selection
+    missing_distinction: DDB excludes salvage from the rate
+    matrix_update: { topic: depreciation, row: Double declining balance, column: salvage }
+    retest: '2026-08-18'
+
+compression:
+  l2:
+    - item: Mutually exclusive
+      detail: Follow NPV. Always.
+      mark: distinction
+    - item: Reinvestment assumption
+      detail: NPV → cost of capital. IRR → the IRR itself.
+      mark: distinction
+    - item: Multiple IRR
+      detail: Only with non-conventional cash flows (more than one sign change).
+      mark: exception
+    - item: DDB and salvage
+      detail: Not in the rate. Is a floor.
+      mark: trap
+    - item: Change of estimate
+      detail: Prospective. Never restate.
+      mark: trap
+    - item: Lifetime depreciation
+      detail: Identical under every method.
+      mark: core
+  l3:
+    - Conflict → NPV wins
+    - IRR assumes reinvestment at IRR
+    - Sign changes > 1 → multiple IRR
+    - PI is a ratio, ranks by efficiency
+    - DDB - carrying amount x 2/n
+    - Salvage is a floor, not a subtraction (DDB)
+    - Estimate change - prospective only
+    - Total depreciation is method-independent
+
+blank_rows:
+  error_log: 9

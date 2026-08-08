@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exam Matrix — 입력기 / Editor</title>
+<style>
+:root{
+  --ink:#14171c; --ink-2:#3d434d; --muted:#6b727d;
+  --rule:#c3c9d1; --hair:#e2e6ea; --accent:#1f4b73;
+  --bg:#f6f7f9; --panel:#fff; --tint:#eceef2;
+  --sans:"Noto Sans KR","Noto Sans CJK KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,"Noto Sans Mono CJK KR",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg);
+  word-break:keep-all;overflow-wrap:break-word}
+
+/* ---- top bar ---- */
+header.bar{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;
+  display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
+header.bar h1{font-size:14px;margin:0;font-weight:700;letter-spacing:.02em}
+header.bar .sp{flex:1}
+header.bar .st{font-size:11px;color:#aeb6c0}
+button,select,input,textarea{font-family:inherit;font-size:13px;color:var(--ink)}
+button{background:#fff;border:1px solid var(--rule);border-radius:5px;padding:5px 11px;cursor:pointer}
+button:hover{background:var(--tint)}
+button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+button.pri:hover{filter:brightness(1.15)}
+button.gh{background:transparent;border-color:#4a525d;color:#fff}
+button.gh:hover{background:#2a3038}
+button.sm{padding:2px 7px;font-size:11px;border-radius:4px}
+button.dg{color:#8a2b2b;border-color:#d8bcbc}
+
+/* ---- layout ---- */
+main{max-width:1180px;margin:0 auto;padding:18px 16px 120px}
+section.card{background:var(--panel);border:1px solid var(--hair);border-radius:8px;margin-bottom:14px}
+section.card>h2{margin:0;padding:11px 14px;font-size:13px;font-weight:700;letter-spacing:.02em;
+  border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:8px;cursor:pointer;
+  background:linear-gradient(180deg,#fff,#fafbfc);border-radius:8px 8px 0 0}
+section.card>h2 .cnt{font-weight:400;color:var(--muted);font-size:11px}
+section.card>h2 .tw{margin-left:auto;color:var(--muted);font-size:11px}
+section.card>.body{padding:14px}
+section.card.closed>.body{display:none}
+section.card.closed>h2{border-bottom:none;border-radius:8px}
+
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+label.f{display:block}
+label.f>span{display:block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  font-weight:700;color:var(--muted);margin-bottom:3px}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;border:1px solid var(--rule);border-radius:5px;padding:6px 8px;background:#fff}
+textarea{resize:vertical;min-height:56px;line-height:1.45}
+input:focus,select:focus,textarea:focus{outline:2px solid #b9cde0;outline-offset:-1px;border-color:var(--accent)}
+.hint{font-size:11.5px;color:var(--muted);line-height:1.45;margin:0 0 10px}
+.hint b{color:var(--ink-2)}
+
+/* ---- repeatable rows ---- */
+.item{border:1px solid var(--hair);border-radius:7px;padding:11px;margin-bottom:10px;background:#fcfdfe}
+.item>.ih{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+.item>.ih .n{font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--ink-2);
+  border-radius:50%;width:19px;height:19px;display:grid;place-items:center;flex:0 0 19px}
+.item>.ih .t{font-weight:700;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.addbtn{margin-top:2px}
+
+/* ---- matrix grid ---- */
+.mxwrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:#fff}
+table.mx{border-collapse:collapse;min-width:100%}
+table.mx th,table.mx td{border:1px solid var(--hair);padding:5px;vertical-align:top}
+table.mx thead th{background:var(--tint);position:sticky;top:0}
+table.mx th.rl,table.mx td.rl{background:#f7f8fa;min-width:130px;position:sticky;left:0;z-index:2}
+table.mx thead th.rl{z-index:3}
+table.mx td{min-width:170px}
+table.mx textarea{min-height:52px;font-size:12.5px;border-color:var(--hair)}
+table.mx input{font-size:12.5px;border-color:var(--hair)}
+.colhd{display:flex;flex-direction:column;gap:4px}
+.colhd .rw{display:flex;gap:4px;align-items:center}
+select.mk{font-size:10.5px;padding:2px 4px;border-radius:4px;width:auto;flex:1}
+.mk-core{background:#fff}.mk-distinction{background:#eceef2}.mk-exception{background:#f0ece5}
+.mk-trap{background:#e7e5e9}.mk-update{background:#fff}.mk-evidence{background:#f2f4f6}
+td.c-distinction{background:#f6f7f9}td.c-exception{background:#faf7f2}td.c-trap{background:#f4f3f5}
+
+/* ---- YAML pane ---- */
+.yamlwrap{position:fixed;inset:auto 0 0 0;background:#12161b;color:#d6dde6;z-index:60;
+  border-top:2px solid var(--accent);display:flex;flex-direction:column;max-height:70vh}
+.yamlwrap.hidden{display:none}
+.yamlwrap .yh{display:flex;align-items:center;gap:9px;padding:7px 14px;border-bottom:1px solid #2a3038;font-size:12px}
+.yamlwrap pre{margin:0;padding:12px 14px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.55;white-space:pre}
+.footbar{position:fixed;inset:auto 0 0 0;background:#fff;border-top:1px solid var(--rule);
+  display:flex;gap:9px;align-items:center;padding:9px 16px;z-index:55;flex-wrap:wrap}
+.footbar .sp{flex:1}
+.footbar .msg{font-size:11.5px;color:var(--muted)}
+.warn{background:#fdf6e7;border:1px solid #e8d9ae;border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:10px}
+.warn ul{margin:5px 0 0;padding-left:18px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <h1>Exam Matrix</h1>
+  <span class="st" id="subtitle"></span>
+  <span class="sp"></span>
+  <button class="gh" id="btnLang">EN</button>
+  <button class="gh" id="btnLoad" data-i="load">불러오기</button>
+  <input type="file" id="fileIn" accept=".yaml,.yml" hidden>
+  <button class="gh" id="btnSample" data-i="sample">예시 채우기</button>
+  <button class="gh" id="btnClear" data-i="clear">비우기</button>
+</header>
+
+<main id="app"></main>
+
+<div class="footbar">
+  <button class="pri" id="btnDl" data-i="download">YAML 내려받기</button>
+  <button id="btnCopy" data-i="copy">복사</button>
+  <button id="btnYaml" data-i="showyaml">YAML 보기</button>
+  <span class="sp"></span>
+  <span class="msg" id="msg"></span>
+</div>
+
+<div class="yamlwrap hidden" id="yamlPane">
+  <div class="yh"><b>exam.yaml</b><span class="sp" style="flex:1"></span>
+    <button class="sm" id="btnYamlClose">닫기</button></div>
+  <pre id="yamlOut"></pre>
+</div>
+
+<script>/*! js-yaml 4.1.0 — MIT License — https://github.com/nodeca/js-yaml
+ * Vendored so this file works offline from file://. Do not edit by hand;
+ * regenerate with: node scripts/build-editor.js */
+/*! js-yaml 4.1.0 https://github.com/nodeca/js-yaml @license MIT */
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(exports):"function"==typeof define&&define.amd?define(["exports"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).jsyaml={})}(this,(function(e){"use strict";function t(e){return null==e}var n={isNothing:t,isObject:function(e){return"object"==typeof e&&null!==e},toArray:function(e){return Array.isArray(e)?e:t(e)?[]:[e]},repeat:function(e,t){var n,i="";for(n=0;n<t;n+=1)i+=e;return i},isNegativeZero:function(e){return 0===e&&Number.NEGATIVE_INFINITY===1/e},extend:function(e,t){var n,i,r,o;if(t)for(n=0,i=(o=Object.keys(t)).length;n<i;n+=1)e[r=o[n]]=t[r];return e}};function i(e,t){var n="",i=e.reason||"(unknown reason)";return e.mark?(e.mark.name&&(n+='in "'+e.mark.name+'" '),n+="("+(e.mark.line+1)+":"+(e.mark.column+1)+")",!t&&e.mark.snippet&&(n+="\n\n"+e.mark.snippet),i+" "+n):i}function r(e,t){Error.call(this),this.name="YAMLException",this.reason=e,this.mark=t,this.message=i(this,!1),Error.captureStackTrace?Error.captureStackTrace(this,this.constructor):this.stack=(new Error).stack||""}r.prototype=Object.create(Error.prototype),r.prototype.constructor=r,r.prototype.toString=function(e){return this.name+": "+i(this,e)};var o=r;function a(e,t,n,i,r){var o="",a="",l=Math.floor(r/2)-1;return i-t>l&&(t=i-l+(o=" ... ").length),n-i>l&&(n=i+l-(a=" ...").length),{str:o+e.slice(t,n).replace(/\t/g,"→")+a,pos:i-t+o.length}}function l(e,t){return n.repeat(" ",t-e.length)+e}var c=function(e,t){if(t=Object.create(t||null),!e.buffer)return null;t.maxLength||(t.maxLength=79),"number"!=typeof t.indent&&(t.indent=1),"number"!=typeof t.linesBefore&&(t.linesBefore=3),"number"!=typeof t.linesAfter&&(t.linesAfter=2);for(var i,r=/\r?\n|\r|\0/g,o=[0],c=[],s=-1;i=r.exec(e.buffer);)c.push(i.index),o.push(i.index+i[0].length),e.position<=i.index&&s<0&&(s=o.length-2);s<0&&(s=o.length-1);var u,p,f="",d=Math.min(e.line+t.linesAfter,c.length).toString().length,h=t.maxLength-(t.indent+d+3);for(u=1;u<=t.linesBefore&&!(s-u<0);u++)p=a(e.buffer,o[s-u],c[s-u],e.position-(o[s]-o[s-u]),h),f=n.repeat(" ",t.indent)+l((e.line-u+1).toString(),d)+" | "+p.str+"\n"+f;for(p=a(e.buffer,o[s],c[s],e.position,h),f+=n.repeat(" ",t.indent)+l((e.line+1).toString(),d)+" | "+p.str+"\n",f+=n.repeat("-",t.indent+d+3+p.pos)+"^\n",u=1;u<=t.linesAfter&&!(s+u>=c.length);u++)p=a(e.buffer,o[s+u],c[s+u],e.position-(o[s]-o[s+u]),h),f+=n.repeat(" ",t.indent)+l((e.line+u+1).toString(),d)+" | "+p.str+"\n";return f.replace(/\n$/,"")},s=["kind","multi","resolve","construct","instanceOf","predicate","represent","representName","defaultStyle","styleAliases"],u=["scalar","sequence","mapping"];var p=function(e,t){if(t=t||{},Object.keys(t).forEach((function(t){if(-1===s.indexOf(t))throw new o('Unknown option "'+t+'" is met in definition of "'+e+'" YAML type.')})),this.options=t,this.tag=e,this.kind=t.kind||null,this.resolve=t.resolve||function(){return!0},this.construct=t.construct||function(e){return e},this.instanceOf=t.instanceOf||null,this.predicate=t.predicate||null,this.represent=t.represent||null,this.representName=t.representName||null,this.defaultStyle=t.defaultStyle||null,this.multi=t.multi||!1,this.styleAliases=function(e){var t={};return null!==e&&Object.keys(e).forEach((function(n){e[n].forEach((function(e){t[String(e)]=n}))})),t}(t.styleAliases||null),-1===u.indexOf(this.kind))throw new o('Unknown kind "'+this.kind+'" is specified for "'+e+'" YAML type.')};function f(e,t){var n=[];return e[t].forEach((function(e){var t=n.length;n.forEach((function(n,i){n.tag===e.tag&&n.kind===e.kind&&n.multi===e.multi&&(t=i)})),n[t]=e})),n}function d(e){return this.extend(e)}d.prototype.extend=function(e){var t=[],n=[];if(e instanceof p)n.push(e);else if(Array.isArray(e))n=n.concat(e);else{if(!e||!Array.isArray(e.implicit)&&!Array.isArray(e.explicit))throw new o("Schema.extend argument should be a Type, [ Type ], or a schema definition ({ implicit: [...], explicit: [...] })");e.implicit&&(t=t.concat(e.implicit)),e.explicit&&(n=n.concat(e.explicit))}t.forEach((function(e){if(!(e instanceof p))throw new o("Specified list of YAML types (or a single Type object) contains a non-Type object.");if(e.loadKind&&"scalar"!==e.loadKind)throw new o("There is a non-scalar type in the implicit list of a schema. Implicit resolving of such types is not supported.");if(e.multi)throw new o("There is a multi type in the implicit list of a schema. Multi tags can only be listed as explicit.")})),n.forEach((function(e){if(!(e instanceof p))throw new o("Specified list of YAML types (or a single Type object) contains a non-Type object.")}));var i=Object.create(d.prototype);return i.implicit=(this.implicit||[]).concat(t),i.explicit=(this.explicit||[]).concat(n),i.compiledImplicit=f(i,"implicit"),i.compiledExplicit=f(i,"explicit"),i.compiledTypeMap=function(){var e,t,n={scalar:{},sequence:{},mapping:{},fallback:{},multi:{scalar:[],sequence:[],mapping:[],fallback:[]}};function i(e){e.multi?(n.multi[e.kind].push(e),n.multi.fallback.push(e)):n[e.kind][e.tag]=n.fallback[e.tag]=e}for(e=0,t=arguments.length;e<t;e+=1)arguments[e].forEach(i);return n}(i.compiledImplicit,i.compiledExplicit),i};var h=d,g=new p("tag:yaml.org,2002:str",{kind:"scalar",construct:function(e){return null!==e?e:""}}),m=new p("tag:yaml.org,2002:seq",{kind:"sequence",construct:function(e){return null!==e?e:[]}}),y=new p("tag:yaml.org,2002:map",{kind:"mapping",construct:function(e){return null!==e?e:{}}}),b=new h({explicit:[g,m,y]});var A=new p("tag:yaml.org,2002:null",{kind:"scalar",resolve:function(e){if(null===e)return!0;var t=e.length;return 1===t&&"~"===e||4===t&&("null"===e||"Null"===e||"NULL"===e)},construct:function(){return null},predicate:function(e){return null===e},represent:{canonical:function(){return"~"},lowercase:function(){return"null"},uppercase:function(){return"NULL"},camelcase:function(){return"Null"},empty:function(){return""}},defaultStyle:"lowercase"});var v=new p("tag:yaml.org,2002:bool",{kind:"scalar",resolve:function(e){if(null===e)return!1;var t=e.length;return 4===t&&("true"===e||"True"===e||"TRUE"===e)||5===t&&("false"===e||"False"===e||"FALSE"===e)},construct:function(e){return"true"===e||"True"===e||"TRUE"===e},predicate:function(e){return"[object Boolean]"===Object.prototype.toString.call(e)},represent:{lowercase:function(e){return e?"true":"false"},uppercase:function(e){return e?"TRUE":"FALSE"},camelcase:function(e){return e?"True":"False"}},defaultStyle:"lowercase"});function w(e){return 48<=e&&e<=55}function k(e){return 48<=e&&e<=57}var C=new p("tag:yaml.org,2002:int",{kind:"scalar",resolve:function(e){if(null===e)return!1;var t,n,i=e.length,r=0,o=!1;if(!i)return!1;if("-"!==(t=e[r])&&"+"!==t||(t=e[++r]),"0"===t){if(r+1===i)return!0;if("b"===(t=e[++r])){for(r++;r<i;r++)if("_"!==(t=e[r])){if("0"!==t&&"1"!==t)return!1;o=!0}return o&&"_"!==t}if("x"===t){for(r++;r<i;r++)if("_"!==(t=e[r])){if(!(48<=(n=e.charCodeAt(r))&&n<=57||65<=n&&n<=70||97<=n&&n<=102))return!1;o=!0}return o&&"_"!==t}if("o"===t){for(r++;r<i;r++)if("_"!==(t=e[r])){if(!w(e.charCodeAt(r)))return!1;o=!0}return o&&"_"!==t}}if("_"===t)return!1;for(;r<i;r++)if("_"!==(t=e[r])){if(!k(e.charCodeAt(r)))return!1;o=!0}return!(!o||"_"===t)},construct:function(e){var t,n=e,i=1;if(-1!==n.indexOf("_")&&(n=n.replace(/_/g,"")),"-"!==(t=n[0])&&"+"!==t||("-"===t&&(i=-1),t=(n=n.slice(1))[0]),"0"===n)return 0;if("0"===t){if("b"===n[1])return i*parseInt(n.slice(2),2);if("x"===n[1])return i*parseInt(n.slice(2),16);if("o"===n[1])return i*parseInt(n.slice(2),8)}return i*parseInt(n,10)},predicate:function(e){return"[object Number]"===Object.prototype.toString.call(e)&&e%1==0&&!n.isNegativeZero(e)},represent:{binary:function(e){return e>=0?"0b"+e.toString(2):"-0b"+e.toString(2).slice(1)},octal:function(e){return e>=0?"0o"+e.toString(8):"-0o"+e.toString(8).slice(1)},decimal:function(e){return e.toString(10)},hexadecimal:function(e){return e>=0?"0x"+e.toString(16).toUpperCase():"-0x"+e.toString(16).toUpperCase().slice(1)}},defaultStyle:"decimal",styleAliases:{binary:[2,"bin"],octal:[8,"oct"],decimal:[10,"dec"],hexadecimal:[16,"hex"]}}),x=new RegExp("^(?:[-+]?(?:[0-9][0-9_]*)(?:\\.[0-9_]*)?(?:[eE][-+]?[0-9]+)?|\\.[0-9_]+(?:[eE][-+]?[0-9]+)?|[-+]?\\.(?:inf|Inf|INF)|\\.(?:nan|NaN|NAN))$");var I=/^[-+]?[0-9]+e/;var S=new p("tag:yaml.org,2002:float",{kind:"scalar",resolve:function(e){return null!==e&&!(!x.test(e)||"_"===e[e.length-1])},construct:function(e){var t,n;return n="-"===(t=e.replace(/_/g,"").toLowerCase())[0]?-1:1,"+-".indexOf(t[0])>=0&&(t=t.slice(1)),".inf"===t?1===n?Number.POSITIVE_INFINITY:Number.NEGATIVE_INFINITY:".nan"===t?NaN:n*parseFloat(t,10)},predicate:function(e){return"[object Number]"===Object.prototype.toString.call(e)&&(e%1!=0||n.isNegativeZero(e))},represent:function(e,t){var i;if(isNaN(e))switch(t){case"lowercase":return".nan";case"uppercase":return".NAN";case"camelcase":return".NaN"}else if(Number.POSITIVE_INFINITY===e)switch(t){case"lowercase":return".inf";case"uppercase":return".INF";case"camelcase":return".Inf"}else if(Number.NEGATIVE_INFINITY===e)switch(t){case"lowercase":return"-.inf";case"uppercase":return"-.INF";case"camelcase":return"-.Inf"}else if(n.isNegativeZero(e))return"-0.0";return i=e.toString(10),I.test(i)?i.replace("e",".e"):i},defaultStyle:"lowercase"}),O=b.extend({implicit:[A,v,C,S]}),j=O,T=new RegExp("^([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])$"),N=new RegExp("^([0-9][0-9][0-9][0-9])-([0-9][0-9]?)-([0-9][0-9]?)(?:[Tt]|[ \\t]+)([0-9][0-9]?):([0-9][0-9]):([0-9][0-9])(?:\\.([0-9]*))?(?:[ \\t]*(Z|([-+])([0-9][0-9]?)(?::([0-9][0-9]))?))?$");var F=new p("tag:yaml.org,2002:timestamp",{kind:"scalar",resolve:function(e){return null!==e&&(null!==T.exec(e)||null!==N.exec(e))},construct:function(e){var t,n,i,r,o,a,l,c,s=0,u=null;if(null===(t=T.exec(e))&&(t=N.exec(e)),null===t)throw new Error("Date resolve error");if(n=+t[1],i=+t[2]-1,r=+t[3],!t[4])return new Date(Date.UTC(n,i,r));if(o=+t[4],a=+t[5],l=+t[6],t[7]){for(s=t[7].slice(0,3);s.length<3;)s+="0";s=+s}return t[9]&&(u=6e4*(60*+t[10]+ +(t[11]||0)),"-"===t[9]&&(u=-u)),c=new Date(Date.UTC(n,i,r,o,a,l,s)),u&&c.setTime(c.getTime()-u),c},instanceOf:Date,represent:function(e){return e.toISOString()}});var E=new p("tag:yaml.org,2002:merge",{kind:"scalar",resolve:function(e){return"<<"===e||null===e}}),M="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=\n\r";var L=new p("tag:yaml.org,2002:binary",{kind:"scalar",resolve:function(e){if(null===e)return!1;var t,n,i=0,r=e.length,o=M;for(n=0;n<r;n++)if(!((t=o.indexOf(e.charAt(n)))>64)){if(t<0)return!1;i+=6}return i%8==0},construct:function(e){var t,n,i=e.replace(/[\r\n=]/g,""),r=i.length,o=M,a=0,l=[];for(t=0;t<r;t++)t%4==0&&t&&(l.push(a>>16&255),l.push(a>>8&255),l.push(255&a)),a=a<<6|o.indexOf(i.charAt(t));return 0===(n=r%4*6)?(l.push(a>>16&255),l.push(a>>8&255),l.push(255&a)):18===n?(l.push(a>>10&255),l.push(a>>2&255)):12===n&&l.push(a>>4&255),new Uint8Array(l)},predicate:function(e){return"[object Uint8Array]"===Object.prototype.toString.call(e)},represent:function(e){var t,n,i="",r=0,o=e.length,a=M;for(t=0;t<o;t++)t%3==0&&t&&(i+=a[r>>18&63],i+=a[r>>12&63],i+=a[r>>6&63],i+=a[63&r]),r=(r<<8)+e[t];return 0===(n=o%3)?(i+=a[r>>18&63],i+=a[r>>12&63],i+=a[r>>6&63],i+=a[63&r]):2===n?(i+=a[r>>10&63],i+=a[r>>4&63],i+=a[r<<2&63],i+=a[64]):1===n&&(i+=a[r>>2&63],i+=a[r<<4&63],i+=a[64],i+=a[64]),i}}),_=Object.prototype.hasOwnProperty,D=Object.prototype.toString;var U=new p("tag:yaml.org,2002:omap",{kind:"sequence",resolve:function(e){if(null===e)return!0;var t,n,i,r,o,a=[],l=e;for(t=0,n=l.length;t<n;t+=1){if(i=l[t],o=!1,"[object Object]"!==D.call(i))return!1;for(r in i)if(_.call(i,r)){if(o)return!1;o=!0}if(!o)return!1;if(-1!==a.indexOf(r))return!1;a.push(r)}return!0},construct:function(e){return null!==e?e:[]}}),q=Object.prototype.toString;var Y=new p("tag:yaml.org,2002:pairs",{kind:"sequence",resolve:function(e){if(null===e)return!0;var t,n,i,r,o,a=e;for(o=new Array(a.length),t=0,n=a.length;t<n;t+=1){if(i=a[t],"[object Object]"!==q.call(i))return!1;if(1!==(r=Object.keys(i)).length)return!1;o[t]=[r[0],i[r[0]]]}return!0},construct:function(e){if(null===e)return[];var t,n,i,r,o,a=e;for(o=new Array(a.length),t=0,n=a.length;t<n;t+=1)i=a[t],r=Object.keys(i),o[t]=[r[0],i[r[0]]];return o}}),R=Object.prototype.hasOwnProperty;var B=new p("tag:yaml.org,2002:set",{kind:"mapping",resolve:function(e){if(null===e)return!0;var t,n=e;for(t in n)if(R.call(n,t)&&null!==n[t])return!1;return!0},construct:function(e){return null!==e?e:{}}}),K=j.extend({implicit:[F,E],explicit:[L,U,Y,B]}),P=Object.prototype.hasOwnProperty,W=/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x84\x86-\x9F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/,H=/[\x85\u2028\u2029]/,$=/[,\[\]\{\}]/,G=/^(?:!|!!|![a-z\-]+!)$/i,V=/^(?:!|[^,\[\]\{\}])(?:%[0-9a-f]{2}|[0-9a-z\-#;\/\?:@&=\+\$,_\.!~\*'\(\)\[\]])*$/i;function Z(e){return Object.prototype.toString.call(e)}function J(e){return 10===e||13===e}function Q(e){return 9===e||32===e}function z(e){return 9===e||32===e||10===e||13===e}function X(e){return 44===e||91===e||93===e||123===e||125===e}function ee(e){var t;return 48<=e&&e<=57?e-48:97<=(t=32|e)&&t<=102?t-97+10:-1}function te(e){return 48===e?"\0":97===e?"":98===e?"\b":116===e||9===e?"\t":110===e?"\n":118===e?"\v":102===e?"\f":114===e?"\r":101===e?"":32===e?" ":34===e?'"':47===e?"/":92===e?"\\":78===e?"":95===e?" ":76===e?"\u2028":80===e?"\u2029":""}function ne(e){return e<=65535?String.fromCharCode(e):String.fromCharCode(55296+(e-65536>>10),56320+(e-65536&1023))}for(var ie=new Array(256),re=new Array(256),oe=0;oe<256;oe++)ie[oe]=te(oe)?1:0,re[oe]=te(oe);function ae(e,t){this.input=e,this.filename=t.filename||null,this.schema=t.schema||K,this.onWarning=t.onWarning||null,this.legacy=t.legacy||!1,this.json=t.json||!1,this.listener=t.listener||null,this.implicitTypes=this.schema.compiledImplicit,this.typeMap=this.schema.compiledTypeMap,this.length=e.length,this.position=0,this.line=0,this.lineStart=0,this.lineIndent=0,this.firstTabInLine=-1,this.documents=[]}function le(e,t){var n={name:e.filename,buffer:e.input.slice(0,-1),position:e.position,line:e.line,column:e.position-e.lineStart};return n.snippet=c(n),new o(t,n)}function ce(e,t){throw le(e,t)}function se(e,t){e.onWarning&&e.onWarning.call(null,le(e,t))}var ue={YAML:function(e,t,n){var i,r,o;null!==e.version&&ce(e,"duplication of %YAML directive"),1!==n.length&&ce(e,"YAML directive accepts exactly one argument"),null===(i=/^([0-9]+)\.([0-9]+)$/.exec(n[0]))&&ce(e,"ill-formed argument of the YAML directive"),r=parseInt(i[1],10),o=parseInt(i[2],10),1!==r&&ce(e,"unacceptable YAML version of the document"),e.version=n[0],e.checkLineBreaks=o<2,1!==o&&2!==o&&se(e,"unsupported YAML version of the document")},TAG:function(e,t,n){var i,r;2!==n.length&&ce(e,"TAG directive accepts exactly two arguments"),i=n[0],r=n[1],G.test(i)||ce(e,"ill-formed tag handle (first argument) of the TAG directive"),P.call(e.tagMap,i)&&ce(e,'there is a previously declared suffix for "'+i+'" tag handle'),V.test(r)||ce(e,"ill-formed tag prefix (second argument) of the TAG directive");try{r=decodeURIComponent(r)}catch(t){ce(e,"tag prefix is malformed: "+r)}e.tagMap[i]=r}};function pe(e,t,n,i){var r,o,a,l;if(t<n){if(l=e.input.slice(t,n),i)for(r=0,o=l.length;r<o;r+=1)9===(a=l.charCodeAt(r))||32<=a&&a<=1114111||ce(e,"expected valid JSON character");else W.test(l)&&ce(e,"the stream contains non-printable characters");e.result+=l}}function fe(e,t,i,r){var o,a,l,c;for(n.isObject(i)||ce(e,"cannot merge mappings; the provided source object is unacceptable"),l=0,c=(o=Object.keys(i)).length;l<c;l+=1)a=o[l],P.call(t,a)||(t[a]=i[a],r[a]=!0)}function de(e,t,n,i,r,o,a,l,c){var s,u;if(Array.isArray(r))for(s=0,u=(r=Array.prototype.slice.call(r)).length;s<u;s+=1)Array.isArray(r[s])&&ce(e,"nested arrays are not supported inside keys"),"object"==typeof r&&"[object Object]"===Z(r[s])&&(r[s]="[object Object]");if("object"==typeof r&&"[object Object]"===Z(r)&&(r="[object Object]"),r=String(r),null===t&&(t={}),"tag:yaml.org,2002:merge"===i)if(Array.isArray(o))for(s=0,u=o.length;s<u;s+=1)fe(e,t,o[s],n);else fe(e,t,o,n);else e.json||P.call(n,r)||!P.call(t,r)||(e.line=a||e.line,e.lineStart=l||e.lineStart,e.position=c||e.position,ce(e,"duplicated mapping key")),"__proto__"===r?Object.defineProperty(t,r,{configurable:!0,enumerable:!0,writable:!0,value:o}):t[r]=o,delete n[r];return t}function he(e){var t;10===(t=e.input.charCodeAt(e.position))?e.position++:13===t?(e.position++,10===e.input.charCodeAt(e.position)&&e.position++):ce(e,"a line break is expected"),e.line+=1,e.lineStart=e.position,e.firstTabInLine=-1}function ge(e,t,n){for(var i=0,r=e.input.charCodeAt(e.position);0!==r;){for(;Q(r);)9===r&&-1===e.firstTabInLine&&(e.firstTabInLine=e.position),r=e.input.charCodeAt(++e.position);if(t&&35===r)do{r=e.input.charCodeAt(++e.position)}while(10!==r&&13!==r&&0!==r);if(!J(r))break;for(he(e),r=e.input.charCodeAt(e.position),i++,e.lineIndent=0;32===r;)e.lineIndent++,r=e.input.charCodeAt(++e.position)}return-1!==n&&0!==i&&e.lineIndent<n&&se(e,"deficient indentation"),i}function me(e){var t,n=e.position;return!(45!==(t=e.input.charCodeAt(n))&&46!==t||t!==e.input.charCodeAt(n+1)||t!==e.input.charCodeAt(n+2)||(n+=3,0!==(t=e.input.charCodeAt(n))&&!z(t)))}function ye(e,t){1===t?e.result+=" ":t>1&&(e.result+=n.repeat("\n",t-1))}function be(e,t){var n,i,r=e.tag,o=e.anchor,a=[],l=!1;if(-1!==e.firstTabInLine)return!1;for(null!==e.anchor&&(e.anchorMap[e.anchor]=a),i=e.input.charCodeAt(e.position);0!==i&&(-1!==e.firstTabInLine&&(e.position=e.firstTabInLine,ce(e,"tab characters must not be used in indentation")),45===i)&&z(e.input.charCodeAt(e.position+1));)if(l=!0,e.position++,ge(e,!0,-1)&&e.lineIndent<=t)a.push(null),i=e.input.charCodeAt(e.position);else if(n=e.line,we(e,t,3,!1,!0),a.push(e.result),ge(e,!0,-1),i=e.input.charCodeAt(e.position),(e.line===n||e.lineIndent>t)&&0!==i)ce(e,"bad indentation of a sequence entry");else if(e.lineIndent<t)break;return!!l&&(e.tag=r,e.anchor=o,e.kind="sequence",e.result=a,!0)}function Ae(e){var t,n,i,r,o=!1,a=!1;if(33!==(r=e.input.charCodeAt(e.position)))return!1;if(null!==e.tag&&ce(e,"duplication of a tag property"),60===(r=e.input.charCodeAt(++e.position))?(o=!0,r=e.input.charCodeAt(++e.position)):33===r?(a=!0,n="!!",r=e.input.charCodeAt(++e.position)):n="!",t=e.position,o){do{r=e.input.charCodeAt(++e.position)}while(0!==r&&62!==r);e.position<e.length?(i=e.input.slice(t,e.position),r=e.input.charCodeAt(++e.position)):ce(e,"unexpected end of the stream within a verbatim tag")}else{for(;0!==r&&!z(r);)33===r&&(a?ce(e,"tag suffix cannot contain exclamation marks"):(n=e.input.slice(t-1,e.position+1),G.test(n)||ce(e,"named tag handle cannot contain such characters"),a=!0,t=e.position+1)),r=e.input.charCodeAt(++e.position);i=e.input.slice(t,e.position),$.test(i)&&ce(e,"tag suffix cannot contain flow indicator characters")}i&&!V.test(i)&&ce(e,"tag name cannot contain such characters: "+i);try{i=decodeURIComponent(i)}catch(t){ce(e,"tag name is malformed: "+i)}return o?e.tag=i:P.call(e.tagMap,n)?e.tag=e.tagMap[n]+i:"!"===n?e.tag="!"+i:"!!"===n?e.tag="tag:yaml.org,2002:"+i:ce(e,'undeclared tag handle "'+n+'"'),!0}function ve(e){var t,n;if(38!==(n=e.input.charCodeAt(e.position)))return!1;for(null!==e.anchor&&ce(e,"duplication of an anchor property"),n=e.input.charCodeAt(++e.position),t=e.position;0!==n&&!z(n)&&!X(n);)n=e.input.charCodeAt(++e.position);return e.position===t&&ce(e,"name of an anchor node must contain at least one character"),e.anchor=e.input.slice(t,e.position),!0}function we(e,t,i,r,o){var a,l,c,s,u,p,f,d,h,g=1,m=!1,y=!1;if(null!==e.listener&&e.listener("open",e),e.tag=null,e.anchor=null,e.kind=null,e.result=null,a=l=c=4===i||3===i,r&&ge(e,!0,-1)&&(m=!0,e.lineIndent>t?g=1:e.lineIndent===t?g=0:e.lineIndent<t&&(g=-1)),1===g)for(;Ae(e)||ve(e);)ge(e,!0,-1)?(m=!0,c=a,e.lineIndent>t?g=1:e.lineIndent===t?g=0:e.lineIndent<t&&(g=-1)):c=!1;if(c&&(c=m||o),1!==g&&4!==i||(d=1===i||2===i?t:t+1,h=e.position-e.lineStart,1===g?c&&(be(e,h)||function(e,t,n){var i,r,o,a,l,c,s,u=e.tag,p=e.anchor,f={},d=Object.create(null),h=null,g=null,m=null,y=!1,b=!1;if(-1!==e.firstTabInLine)return!1;for(null!==e.anchor&&(e.anchorMap[e.anchor]=f),s=e.input.charCodeAt(e.position);0!==s;){if(y||-1===e.firstTabInLine||(e.position=e.firstTabInLine,ce(e,"tab characters must not be used in indentation")),i=e.input.charCodeAt(e.position+1),o=e.line,63!==s&&58!==s||!z(i)){if(a=e.line,l=e.lineStart,c=e.position,!we(e,n,2,!1,!0))break;if(e.line===o){for(s=e.input.charCodeAt(e.position);Q(s);)s=e.input.charCodeAt(++e.position);if(58===s)z(s=e.input.charCodeAt(++e.position))||ce(e,"a whitespace character is expected after the key-value separator within a block mapping"),y&&(de(e,f,d,h,g,null,a,l,c),h=g=m=null),b=!0,y=!1,r=!1,h=e.tag,g=e.result;else{if(!b)return e.tag=u,e.anchor=p,!0;ce(e,"can not read an implicit mapping pair; a colon is missed")}}else{if(!b)return e.tag=u,e.anchor=p,!0;ce(e,"can not read a block mapping entry; a multiline key may not be an implicit key")}}else 63===s?(y&&(de(e,f,d,h,g,null,a,l,c),h=g=m=null),b=!0,y=!0,r=!0):y?(y=!1,r=!0):ce(e,"incomplete explicit mapping pair; a key node is missed; or followed by a non-tabulated empty line"),e.position+=1,s=i;if((e.line===o||e.lineIndent>t)&&(y&&(a=e.line,l=e.lineStart,c=e.position),we(e,t,4,!0,r)&&(y?g=e.result:m=e.result),y||(de(e,f,d,h,g,m,a,l,c),h=g=m=null),ge(e,!0,-1),s=e.input.charCodeAt(e.position)),(e.line===o||e.lineIndent>t)&&0!==s)ce(e,"bad indentation of a mapping entry");else if(e.lineIndent<t)break}return y&&de(e,f,d,h,g,null,a,l,c),b&&(e.tag=u,e.anchor=p,e.kind="mapping",e.result=f),b}(e,h,d))||function(e,t){var n,i,r,o,a,l,c,s,u,p,f,d,h=!0,g=e.tag,m=e.anchor,y=Object.create(null);if(91===(d=e.input.charCodeAt(e.position)))a=93,s=!1,o=[];else{if(123!==d)return!1;a=125,s=!0,o={}}for(null!==e.anchor&&(e.anchorMap[e.anchor]=o),d=e.input.charCodeAt(++e.position);0!==d;){if(ge(e,!0,t),(d=e.input.charCodeAt(e.position))===a)return e.position++,e.tag=g,e.anchor=m,e.kind=s?"mapping":"sequence",e.result=o,!0;h?44===d&&ce(e,"expected the node content, but found ','"):ce(e,"missed comma between flow collection entries"),f=null,l=c=!1,63===d&&z(e.input.charCodeAt(e.position+1))&&(l=c=!0,e.position++,ge(e,!0,t)),n=e.line,i=e.lineStart,r=e.position,we(e,t,1,!1,!0),p=e.tag,u=e.result,ge(e,!0,t),d=e.input.charCodeAt(e.position),!c&&e.line!==n||58!==d||(l=!0,d=e.input.charCodeAt(++e.position),ge(e,!0,t),we(e,t,1,!1,!0),f=e.result),s?de(e,o,y,p,u,f,n,i,r):l?o.push(de(e,null,y,p,u,f,n,i,r)):o.push(u),ge(e,!0,t),44===(d=e.input.charCodeAt(e.position))?(h=!0,d=e.input.charCodeAt(++e.position)):h=!1}ce(e,"unexpected end of the stream within a flow collection")}(e,d)?y=!0:(l&&function(e,t){var i,r,o,a,l,c=1,s=!1,u=!1,p=t,f=0,d=!1;if(124===(a=e.input.charCodeAt(e.position)))r=!1;else{if(62!==a)return!1;r=!0}for(e.kind="scalar",e.result="";0!==a;)if(43===(a=e.input.charCodeAt(++e.position))||45===a)1===c?c=43===a?3:2:ce(e,"repeat of a chomping mode identifier");else{if(!((o=48<=(l=a)&&l<=57?l-48:-1)>=0))break;0===o?ce(e,"bad explicit indentation width of a block scalar; it cannot be less than one"):u?ce(e,"repeat of an indentation width identifier"):(p=t+o-1,u=!0)}if(Q(a)){do{a=e.input.charCodeAt(++e.position)}while(Q(a));if(35===a)do{a=e.input.charCodeAt(++e.position)}while(!J(a)&&0!==a)}for(;0!==a;){for(he(e),e.lineIndent=0,a=e.input.charCodeAt(e.position);(!u||e.lineIndent<p)&&32===a;)e.lineIndent++,a=e.input.charCodeAt(++e.position);if(!u&&e.lineIndent>p&&(p=e.lineIndent),J(a))f++;else{if(e.lineIndent<p){3===c?e.result+=n.repeat("\n",s?1+f:f):1===c&&s&&(e.result+="\n");break}for(r?Q(a)?(d=!0,e.result+=n.repeat("\n",s?1+f:f)):d?(d=!1,e.result+=n.repeat("\n",f+1)):0===f?s&&(e.result+=" "):e.result+=n.repeat("\n",f):e.result+=n.repeat("\n",s?1+f:f),s=!0,u=!0,f=0,i=e.position;!J(a)&&0!==a;)a=e.input.charCodeAt(++e.position);pe(e,i,e.position,!1)}}return!0}(e,d)||function(e,t){var n,i,r;if(39!==(n=e.input.charCodeAt(e.position)))return!1;for(e.kind="scalar",e.result="",e.position++,i=r=e.position;0!==(n=e.input.charCodeAt(e.position));)if(39===n){if(pe(e,i,e.position,!0),39!==(n=e.input.charCodeAt(++e.position)))return!0;i=e.position,e.position++,r=e.position}else J(n)?(pe(e,i,r,!0),ye(e,ge(e,!1,t)),i=r=e.position):e.position===e.lineStart&&me(e)?ce(e,"unexpected end of the document within a single quoted scalar"):(e.position++,r=e.position);ce(e,"unexpected end of the stream within a single quoted scalar")}(e,d)||function(e,t){var n,i,r,o,a,l,c;if(34!==(l=e.input.charCodeAt(e.position)))return!1;for(e.kind="scalar",e.result="",e.position++,n=i=e.position;0!==(l=e.input.charCodeAt(e.position));){if(34===l)return pe(e,n,e.position,!0),e.position++,!0;if(92===l){if(pe(e,n,e.position,!0),J(l=e.input.charCodeAt(++e.position)))ge(e,!1,t);else if(l<256&&ie[l])e.result+=re[l],e.position++;else if((a=120===(c=l)?2:117===c?4:85===c?8:0)>0){for(r=a,o=0;r>0;r--)(a=ee(l=e.input.charCodeAt(++e.position)))>=0?o=(o<<4)+a:ce(e,"expected hexadecimal character");e.result+=ne(o),e.position++}else ce(e,"unknown escape sequence");n=i=e.position}else J(l)?(pe(e,n,i,!0),ye(e,ge(e,!1,t)),n=i=e.position):e.position===e.lineStart&&me(e)?ce(e,"unexpected end of the document within a double quoted scalar"):(e.position++,i=e.position)}ce(e,"unexpected end of the stream within a double quoted scalar")}(e,d)?y=!0:!function(e){var t,n,i;if(42!==(i=e.input.charCodeAt(e.position)))return!1;for(i=e.input.charCodeAt(++e.position),t=e.position;0!==i&&!z(i)&&!X(i);)i=e.input.charCodeAt(++e.position);return e.position===t&&ce(e,"name of an alias node must contain at least one character"),n=e.input.slice(t,e.position),P.call(e.anchorMap,n)||ce(e,'unidentified alias "'+n+'"'),e.result=e.anchorMap[n],ge(e,!0,-1),!0}(e)?function(e,t,n){var i,r,o,a,l,c,s,u,p=e.kind,f=e.result;if(z(u=e.input.charCodeAt(e.position))||X(u)||35===u||38===u||42===u||33===u||124===u||62===u||39===u||34===u||37===u||64===u||96===u)return!1;if((63===u||45===u)&&(z(i=e.input.charCodeAt(e.position+1))||n&&X(i)))return!1;for(e.kind="scalar",e.result="",r=o=e.position,a=!1;0!==u;){if(58===u){if(z(i=e.input.charCodeAt(e.position+1))||n&&X(i))break}else if(35===u){if(z(e.input.charCodeAt(e.position-1)))break}else{if(e.position===e.lineStart&&me(e)||n&&X(u))break;if(J(u)){if(l=e.line,c=e.lineStart,s=e.lineIndent,ge(e,!1,-1),e.lineIndent>=t){a=!0,u=e.input.charCodeAt(e.position);continue}e.position=o,e.line=l,e.lineStart=c,e.lineIndent=s;break}}a&&(pe(e,r,o,!1),ye(e,e.line-l),r=o=e.position,a=!1),Q(u)||(o=e.position+1),u=e.input.charCodeAt(++e.position)}return pe(e,r,o,!1),!!e.result||(e.kind=p,e.result=f,!1)}(e,d,1===i)&&(y=!0,null===e.tag&&(e.tag="?")):(y=!0,null===e.tag&&null===e.anchor||ce(e,"alias node should not have any properties")),null!==e.anchor&&(e.anchorMap[e.anchor]=e.result)):0===g&&(y=c&&be(e,h))),null===e.tag)null!==e.anchor&&(e.anchorMap[e.anchor]=e.result);else if("?"===e.tag){for(null!==e.result&&"scalar"!==e.kind&&ce(e,'unacceptable node kind for !<?> tag; it should be "scalar", not "'+e.kind+'"'),s=0,u=e.implicitTypes.length;s<u;s+=1)if((f=e.implicitTypes[s]).resolve(e.result)){e.result=f.construct(e.result),e.tag=f.tag,null!==e.anchor&&(e.anchorMap[e.anchor]=e.result);break}}else if("!"!==e.tag){if(P.call(e.typeMap[e.kind||"fallback"],e.tag))f=e.typeMap[e.kind||"fallback"][e.tag];else for(f=null,s=0,u=(p=e.typeMap.multi[e.kind||"fallback"]).length;s<u;s+=1)if(e.tag.slice(0,p[s].tag.length)===p[s].tag){f=p[s];break}f||ce(e,"unknown tag !<"+e.tag+">"),null!==e.result&&f.kind!==e.kind&&ce(e,"unacceptable node kind for !<"+e.tag+'> tag; it should be "'+f.kind+'", not "'+e.kind+'"'),f.resolve(e.result,e.tag)?(e.result=f.construct(e.result,e.tag),null!==e.anchor&&(e.anchorMap[e.anchor]=e.result)):ce(e,"cannot resolve a node with !<"+e.tag+"> explicit tag")}return null!==e.listener&&e.listener("close",e),null!==e.tag||null!==e.anchor||y}function ke(e){var t,n,i,r,o=e.position,a=!1;for(e.version=null,e.checkLineBreaks=e.legacy,e.tagMap=Object.create(null),e.anchorMap=Object.create(null);0!==(r=e.input.charCodeAt(e.position))&&(ge(e,!0,-1),r=e.input.charCodeAt(e.position),!(e.lineIndent>0||37!==r));){for(a=!0,r=e.input.charCodeAt(++e.position),t=e.position;0!==r&&!z(r);)r=e.input.charCodeAt(++e.position);for(i=[],(n=e.input.slice(t,e.position)).length<1&&ce(e,"directive name must not be less than one character in length");0!==r;){for(;Q(r);)r=e.input.charCodeAt(++e.position);if(35===r){do{r=e.input.charCodeAt(++e.position)}while(0!==r&&!J(r));break}if(J(r))break;for(t=e.position;0!==r&&!z(r);)r=e.input.charCodeAt(++e.position);i.push(e.input.slice(t,e.position))}0!==r&&he(e),P.call(ue,n)?ue[n](e,n,i):se(e,'unknown document directive "'+n+'"')}ge(e,!0,-1),0===e.lineIndent&&45===e.input.charCodeAt(e.position)&&45===e.input.charCodeAt(e.position+1)&&45===e.input.charCodeAt(e.position+2)?(e.position+=3,ge(e,!0,-1)):a&&ce(e,"directives end mark is expected"),we(e,e.lineIndent-1,4,!1,!0),ge(e,!0,-1),e.checkLineBreaks&&H.test(e.input.slice(o,e.position))&&se(e,"non-ASCII line breaks are interpreted as content"),e.documents.push(e.result),e.position===e.lineStart&&me(e)?46===e.input.charCodeAt(e.position)&&(e.position+=3,ge(e,!0,-1)):e.position<e.length-1&&ce(e,"end of the stream or a document separator is expected")}function Ce(e,t){t=t||{},0!==(e=String(e)).length&&(10!==e.charCodeAt(e.length-1)&&13!==e.charCodeAt(e.length-1)&&(e+="\n"),65279===e.charCodeAt(0)&&(e=e.slice(1)));var n=new ae(e,t),i=e.indexOf("\0");for(-1!==i&&(n.position=i,ce(n,"null byte is not allowed in input")),n.input+="\0";32===n.input.charCodeAt(n.position);)n.lineIndent+=1,n.position+=1;for(;n.position<n.length-1;)ke(n);return n.documents}var xe={loadAll:function(e,t,n){null!==t&&"object"==typeof t&&void 0===n&&(n=t,t=null);var i=Ce(e,n);if("function"!=typeof t)return i;for(var r=0,o=i.length;r<o;r+=1)t(i[r])},load:function(e,t){var n=Ce(e,t);if(0!==n.length){if(1===n.length)return n[0];throw new o("expected a single document in the stream, but found more")}}},Ie=Object.prototype.toString,Se=Object.prototype.hasOwnProperty,Oe=65279,je={0:"\\0",7:"\\a",8:"\\b",9:"\\t",10:"\\n",11:"\\v",12:"\\f",13:"\\r",27:"\\e",34:'\\"',92:"\\\\",133:"\\N",160:"\\_",8232:"\\L",8233:"\\P"},Te=["y","Y","yes","Yes","YES","on","On","ON","n","N","no","No","NO","off","Off","OFF"],Ne=/^[-+]?[0-9_]+(?::[0-9_]+)+(?:\.[0-9_]*)?$/;function Fe(e){var t,i,r;if(t=e.toString(16).toUpperCase(),e<=255)i="x",r=2;else if(e<=65535)i="u",r=4;else{if(!(e<=4294967295))throw new o("code point within a string may not be greater than 0xFFFFFFFF");i="U",r=8}return"\\"+i+n.repeat("0",r-t.length)+t}function Ee(e){this.schema=e.schema||K,this.indent=Math.max(1,e.indent||2),this.noArrayIndent=e.noArrayIndent||!1,this.skipInvalid=e.skipInvalid||!1,this.flowLevel=n.isNothing(e.flowLevel)?-1:e.flowLevel,this.styleMap=function(e,t){var n,i,r,o,a,l,c;if(null===t)return{};for(n={},r=0,o=(i=Object.keys(t)).length;r<o;r+=1)a=i[r],l=String(t[a]),"!!"===a.slice(0,2)&&(a="tag:yaml.org,2002:"+a.slice(2)),(c=e.compiledTypeMap.fallback[a])&&Se.call(c.styleAliases,l)&&(l=c.styleAliases[l]),n[a]=l;return n}(this.schema,e.styles||null),this.sortKeys=e.sortKeys||!1,this.lineWidth=e.lineWidth||80,this.noRefs=e.noRefs||!1,this.noCompatMode=e.noCompatMode||!1,this.condenseFlow=e.condenseFlow||!1,this.quotingType='"'===e.quotingType?2:1,this.forceQuotes=e.forceQuotes||!1,this.replacer="function"==typeof e.replacer?e.replacer:null,this.implicitTypes=this.schema.compiledImplicit,this.explicitTypes=this.schema.compiledExplicit,this.tag=null,this.result="",this.duplicates=[],this.usedDuplicates=null}function Me(e,t){for(var i,r=n.repeat(" ",t),o=0,a=-1,l="",c=e.length;o<c;)-1===(a=e.indexOf("\n",o))?(i=e.slice(o),o=c):(i=e.slice(o,a+1),o=a+1),i.length&&"\n"!==i&&(l+=r),l+=i;return l}function Le(e,t){return"\n"+n.repeat(" ",e.indent*t)}function _e(e){return 32===e||9===e}function De(e){return 32<=e&&e<=126||161<=e&&e<=55295&&8232!==e&&8233!==e||57344<=e&&e<=65533&&e!==Oe||65536<=e&&e<=1114111}function Ue(e){return De(e)&&e!==Oe&&13!==e&&10!==e}function qe(e,t,n){var i=Ue(e),r=i&&!_e(e);return(n?i:i&&44!==e&&91!==e&&93!==e&&123!==e&&125!==e)&&35!==e&&!(58===t&&!r)||Ue(t)&&!_e(t)&&35===e||58===t&&r}function Ye(e,t){var n,i=e.charCodeAt(t);return i>=55296&&i<=56319&&t+1<e.length&&(n=e.charCodeAt(t+1))>=56320&&n<=57343?1024*(i-55296)+n-56320+65536:i}function Re(e){return/^\n* /.test(e)}function Be(e,t,n,i,r,o,a,l){var c,s,u=0,p=null,f=!1,d=!1,h=-1!==i,g=-1,m=De(s=Ye(e,0))&&s!==Oe&&!_e(s)&&45!==s&&63!==s&&58!==s&&44!==s&&91!==s&&93!==s&&123!==s&&125!==s&&35!==s&&38!==s&&42!==s&&33!==s&&124!==s&&61!==s&&62!==s&&39!==s&&34!==s&&37!==s&&64!==s&&96!==s&&function(e){return!_e(e)&&58!==e}(Ye(e,e.length-1));if(t||a)for(c=0;c<e.length;u>=65536?c+=2:c++){if(!De(u=Ye(e,c)))return 5;m=m&&qe(u,p,l),p=u}else{for(c=0;c<e.length;u>=65536?c+=2:c++){if(10===(u=Ye(e,c)))f=!0,h&&(d=d||c-g-1>i&&" "!==e[g+1],g=c);else if(!De(u))return 5;m=m&&qe(u,p,l),p=u}d=d||h&&c-g-1>i&&" "!==e[g+1]}return f||d?n>9&&Re(e)?5:a?2===o?5:2:d?4:3:!m||a||r(e)?2===o?5:2:1}function Ke(e,t,n,i,r){e.dump=function(){if(0===t.length)return 2===e.quotingType?'""':"''";if(!e.noCompatMode&&(-1!==Te.indexOf(t)||Ne.test(t)))return 2===e.quotingType?'"'+t+'"':"'"+t+"'";var a=e.indent*Math.max(1,n),l=-1===e.lineWidth?-1:Math.max(Math.min(e.lineWidth,40),e.lineWidth-a),c=i||e.flowLevel>-1&&n>=e.flowLevel;switch(Be(t,c,e.indent,l,(function(t){return function(e,t){var n,i;for(n=0,i=e.implicitTypes.length;n<i;n+=1)if(e.implicitTypes[n].resolve(t))return!0;return!1}(e,t)}),e.quotingType,e.forceQuotes&&!i,r)){case 1:return t;case 2:return"'"+t.replace(/'/g,"''")+"'";case 3:return"|"+Pe(t,e.indent)+We(Me(t,a));case 4:return">"+Pe(t,e.indent)+We(Me(function(e,t){var n,i,r=/(\n+)([^\n]*)/g,o=(l=e.indexOf("\n"),l=-1!==l?l:e.length,r.lastIndex=l,He(e.slice(0,l),t)),a="\n"===e[0]||" "===e[0];var l;for(;i=r.exec(e);){var c=i[1],s=i[2];n=" "===s[0],o+=c+(a||n||""===s?"":"\n")+He(s,t),a=n}return o}(t,l),a));case 5:return'"'+function(e){for(var t,n="",i=0,r=0;r<e.length;i>=65536?r+=2:r++)i=Ye(e,r),!(t=je[i])&&De(i)?(n+=e[r],i>=65536&&(n+=e[r+1])):n+=t||Fe(i);return n}(t)+'"';default:throw new o("impossible error: invalid scalar style")}}()}function Pe(e,t){var n=Re(e)?String(t):"",i="\n"===e[e.length-1];return n+(i&&("\n"===e[e.length-2]||"\n"===e)?"+":i?"":"-")+"\n"}function We(e){return"\n"===e[e.length-1]?e.slice(0,-1):e}function He(e,t){if(""===e||" "===e[0])return e;for(var n,i,r=/ [^ ]/g,o=0,a=0,l=0,c="";n=r.exec(e);)(l=n.index)-o>t&&(i=a>o?a:l,c+="\n"+e.slice(o,i),o=i+1),a=l;return c+="\n",e.length-o>t&&a>o?c+=e.slice(o,a)+"\n"+e.slice(a+1):c+=e.slice(o),c.slice(1)}function $e(e,t,n,i){var r,o,a,l="",c=e.tag;for(r=0,o=n.length;r<o;r+=1)a=n[r],e.replacer&&(a=e.replacer.call(n,String(r),a)),(Ve(e,t+1,a,!0,!0,!1,!0)||void 0===a&&Ve(e,t+1,null,!0,!0,!1,!0))&&(i&&""===l||(l+=Le(e,t)),e.dump&&10===e.dump.charCodeAt(0)?l+="-":l+="- ",l+=e.dump);e.tag=c,e.dump=l||"[]"}function Ge(e,t,n){var i,r,a,l,c,s;for(a=0,l=(r=n?e.explicitTypes:e.implicitTypes).length;a<l;a+=1)if(((c=r[a]).instanceOf||c.predicate)&&(!c.instanceOf||"object"==typeof t&&t instanceof c.instanceOf)&&(!c.predicate||c.predicate(t))){if(n?c.multi&&c.representName?e.tag=c.representName(t):e.tag=c.tag:e.tag="?",c.represent){if(s=e.styleMap[c.tag]||c.defaultStyle,"[object Function]"===Ie.call(c.represent))i=c.represent(t,s);else{if(!Se.call(c.represent,s))throw new o("!<"+c.tag+'> tag resolver accepts not "'+s+'" style');i=c.represent[s](t,s)}e.dump=i}return!0}return!1}function Ve(e,t,n,i,r,a,l){e.tag=null,e.dump=n,Ge(e,n,!1)||Ge(e,n,!0);var c,s=Ie.call(e.dump),u=i;i&&(i=e.flowLevel<0||e.flowLevel>t);var p,f,d="[object Object]"===s||"[object Array]"===s;if(d&&(f=-1!==(p=e.duplicates.indexOf(n))),(null!==e.tag&&"?"!==e.tag||f||2!==e.indent&&t>0)&&(r=!1),f&&e.usedDuplicates[p])e.dump="*ref_"+p;else{if(d&&f&&!e.usedDuplicates[p]&&(e.usedDuplicates[p]=!0),"[object Object]"===s)i&&0!==Object.keys(e.dump).length?(!function(e,t,n,i){var r,a,l,c,s,u,p="",f=e.tag,d=Object.keys(n);if(!0===e.sortKeys)d.sort();else if("function"==typeof e.sortKeys)d.sort(e.sortKeys);else if(e.sortKeys)throw new o("sortKeys must be a boolean or a function");for(r=0,a=d.length;r<a;r+=1)u="",i&&""===p||(u+=Le(e,t)),c=n[l=d[r]],e.replacer&&(c=e.replacer.call(n,l,c)),Ve(e,t+1,l,!0,!0,!0)&&((s=null!==e.tag&&"?"!==e.tag||e.dump&&e.dump.length>1024)&&(e.dump&&10===e.dump.charCodeAt(0)?u+="?":u+="? "),u+=e.dump,s&&(u+=Le(e,t)),Ve(e,t+1,c,!0,s)&&(e.dump&&10===e.dump.charCodeAt(0)?u+=":":u+=": ",p+=u+=e.dump));e.tag=f,e.dump=p||"{}"}(e,t,e.dump,r),f&&(e.dump="&ref_"+p+e.dump)):(!function(e,t,n){var i,r,o,a,l,c="",s=e.tag,u=Object.keys(n);for(i=0,r=u.length;i<r;i+=1)l="",""!==c&&(l+=", "),e.condenseFlow&&(l+='"'),a=n[o=u[i]],e.replacer&&(a=e.replacer.call(n,o,a)),Ve(e,t,o,!1,!1)&&(e.dump.length>1024&&(l+="? "),l+=e.dump+(e.condenseFlow?'"':"")+":"+(e.condenseFlow?"":" "),Ve(e,t,a,!1,!1)&&(c+=l+=e.dump));e.tag=s,e.dump="{"+c+"}"}(e,t,e.dump),f&&(e.dump="&ref_"+p+" "+e.dump));else if("[object Array]"===s)i&&0!==e.dump.length?(e.noArrayIndent&&!l&&t>0?$e(e,t-1,e.dump,r):$e(e,t,e.dump,r),f&&(e.dump="&ref_"+p+e.dump)):(!function(e,t,n){var i,r,o,a="",l=e.tag;for(i=0,r=n.length;i<r;i+=1)o=n[i],e.replacer&&(o=e.replacer.call(n,String(i),o)),(Ve(e,t,o,!1,!1)||void 0===o&&Ve(e,t,null,!1,!1))&&(""!==a&&(a+=","+(e.condenseFlow?"":" ")),a+=e.dump);e.tag=l,e.dump="["+a+"]"}(e,t,e.dump),f&&(e.dump="&ref_"+p+" "+e.dump));else{if("[object String]"!==s){if("[object Undefined]"===s)return!1;if(e.skipInvalid)return!1;throw new o("unacceptable kind of an object to dump "+s)}"?"!==e.tag&&Ke(e,e.dump,t,a,u)}null!==e.tag&&"?"!==e.tag&&(c=encodeURI("!"===e.tag[0]?e.tag.slice(1):e.tag).replace(/!/g,"%21"),c="!"===e.tag[0]?"!"+c:"tag:yaml.org,2002:"===c.slice(0,18)?"!!"+c.slice(18):"!<"+c+">",e.dump=c+" "+e.dump)}return!0}function Ze(e,t){var n,i,r=[],o=[];for(Je(e,r,o),n=0,i=o.length;n<i;n+=1)t.duplicates.push(r[o[n]]);t.usedDuplicates=new Array(i)}function Je(e,t,n){var i,r,o;if(null!==e&&"object"==typeof e)if(-1!==(r=t.indexOf(e)))-1===n.indexOf(r)&&n.push(r);else if(t.push(e),Array.isArray(e))for(r=0,o=e.length;r<o;r+=1)Je(e[r],t,n);else for(r=0,o=(i=Object.keys(e)).length;r<o;r+=1)Je(e[i[r]],t,n)}function Qe(e,t){return function(){throw new Error("Function yaml."+e+" is removed in js-yaml 4. Use yaml."+t+" instead, which is now safe by default.")}}var ze=p,Xe=h,et=b,tt=O,nt=j,it=K,rt=xe.load,ot=xe.loadAll,at={dump:function(e,t){var n=new Ee(t=t||{});n.noRefs||Ze(e,n);var i=e;return n.replacer&&(i=n.replacer.call({"":i},"",i)),Ve(n,0,i,!0,!0)?n.dump+"\n":""}}.dump,lt=o,ct={binary:L,float:S,map:y,null:A,pairs:Y,set:B,timestamp:F,bool:v,int:C,merge:E,omap:U,seq:m,str:g},st=Qe("safeLoad","load"),ut=Qe("safeLoadAll","loadAll"),pt=Qe("safeDump","dump"),ft={Type:ze,Schema:Xe,FAILSAFE_SCHEMA:et,JSON_SCHEMA:tt,CORE_SCHEMA:nt,DEFAULT_SCHEMA:it,load:rt,loadAll:ot,dump:at,YAMLException:lt,types:ct,safeLoad:st,safeLoadAll:ut,safeDump:pt};e.CORE_SCHEMA=nt,e.DEFAULT_SCHEMA=it,e.FAILSAFE_SCHEMA=et,e.JSON_SCHEMA=tt,e.Schema=Xe,e.Type=ze,e.YAMLException=lt,e.default=ft,e.dump=at,e.load=rt,e.loadAll=ot,e.safeDump=pt,e.safeLoad=st,e.safeLoadAll=ut,e.types=ct,Object.defineProperty(e,"__esModule",{value:!0})}));
+</script>
+<script>
+"use strict";
+/* =========================================================================
+   Exam Matrix editor — types the content, emits the YAML the build reads.
+   Single file, no network, no build step. Works from file://.
+   ========================================================================= */
+
+const MARKS = ["core","distinction","exception","trap","update","evidence"];
+
+const ARCH = {
+  concept:     {ko:"개념 · 이론",   en:"Concept / Theory",   row:{ko:"개념",en:"Concept"},
+    cols:[["definition","한 줄 정의","One-line definition","core"],["criterion","판단 기준","Defining criterion","distinction"],
+          ["characteristics","주요 특징","Key characteristics","core"],["decisive","결정적 차이","Decisive distinction","distinction"],
+          ["exception","예외","Exception","exception"],["trap","빈출 함정","Common trap","trap"]]},
+  law:         {ko:"법령 · 규정",   en:"Law / Regulation",   row:{ko:"제도 · 법리",en:"Rule / doctrine"},
+    cols:[["basis","법적 근거","Legal basis","evidence"],["subject","주체","Subject","core"],
+          ["requirements","요건","Requirements","distinction"],["effect","효과","Effect","core"],
+          ["period","기간 · 기한","Deadline / period","trap"],["exception","예외","Exception","exception"]]},
+  calculation: {ko:"계산 · 공학",   en:"Calculation",        row:{ko:"공식 · 기법",en:"Formula / method"},
+    cols:[["meaning","의미","What it gives you","core"],["variables","변수 · 단위","Variables & units","trap"],
+          ["prerequisites","적용 전제","Prerequisites","distinction"],["when","사용 시점","When to use","distinction"],
+          ["mistake","빈출 실수","Common mistake","trap"],["similar","유사 공식","Similar formula","exception"]]},
+  it:          {ko:"IT · 정보처리", en:"IT certification",   row:{ko:"기술 · 명령어",en:"Technology"},
+    cols:[["purpose","용도","Purpose","core"],["mechanism","동작 · 문법","Mechanism","distinction"],
+          ["prerequisite","전제 조건","Prerequisite","core"],["result","결과","Result","core"],
+          ["limitation","한계","Limitation","exception"],["trap","시험 함정","Exam trap","trap"]]},
+  language:    {ko:"어학",          en:"Language",           row:{ko:"표현",en:"Expression"},
+    cols:[["meaning","의미","Meaning","core"],["function","문법 · 기능","Grammar / function","core"],
+          ["register","격식 · 어감","Register","distinction"],["collocation","연어","Collocation","core"],
+          ["contrast","대조 표현","Contrast with","distinction"],["error","빈출 오류","Common error","trap"]]},
+  procedure:   {ko:"실기 · 절차",   en:"Procedure",          row:{ko:"작업",en:"Task"},
+    cols:[["trigger","착수 조건","Trigger","core"],["steps","단계 순서","Step sequence","distinction"],
+          ["checkpoint","확인 지점","Checkpoint","core"],["error_condition","오류 상황","Error condition","exception"],
+          ["recovery","복구 조치","Recovery","exception"],["examiner_trap","감독관 함정","Examiner trap","trap"]]},
+};
+
+const ETYPES = ["knowledge-gap","confused-pair","exception-forgotten","wording-misread",
+  "formula-selection","calculation","procedure-order","outdated","careless","time-pressure"];
+
+const I18N = {
+  ko:{
+    load:"불러오기", sample:"예시 채우기", clear:"비우기", download:"YAML 내려받기",
+    copy:"복사", showyaml:"YAML 보기", hideyaml:"YAML 숨기기", close:"닫기",
+    s_exam:"시험 정보", s_blueprint:"출제 설계도", s_topics:"주제", s_errors:"오답 기록", s_compress:"압축 사다리",
+    name:"시험명", name_sub:"부제 (선택)", lang:"문서 언어", authority:"시행 기관", date:"시험일",
+    passing:"합격 기준", version:"출제기준 · 버전", target:"목표 점수", confidence:"현재 자신감 (1–5)",
+    updated:"최종 수정", subjects:"과목 (줄바꿈으로 구분)", sources:"학습 자료 (줄바꿈으로 구분)",
+    what_tests:"이 시험은 실제로 무엇을 묻는가? (줄바꿈으로 구분)",
+    domain:"영역", weight:"비중", qtype:"문항 유형", priority:"우선순위", last_review:"최근 복습",
+    high_yield:"빈출 주제", weak:"취약 주제", volatile:"개정 민감 주제",
+    add_domain:"영역 추가", add_topic:"주제 추가", add_row:"행 추가", add_col:"열 추가",
+    add_pair:"혼동 쌍 추가", add_trap:"함정 추가", add_ev:"근거 추가", add_err:"오답 추가",
+    add_l2:"L2 항목 추가", del:"삭제",
+    title:"주제 제목", id:"ID (영문·숫자·하이픈)", archetype:"유형", importance:"중요도",
+    frequency:"출제 빈도", why:"왜 중요한가", core_q:"핵심 질문", key_axis:"핵심 비교축",
+    prereq:"선행 개념 (쉼표 구분)", tsources:"근거 (쉼표 구분)", tupdated:"최종 수정",
+    one_sentence:"한 문장 모델", essentials:"핵심 사실 (최대 5개)",
+    matrix:"엑셀표 매트릭스", row_label:"행 머리말", mnote:"메모 (선택)",
+    decisive:"결정적 변별", decisive_a:"단 하나의 기준으로 구분한다면?",
+    pairs:"혼동 쌍", p_a:"A", p_b:"B", p_why:"왜 혼동되는가", p_clue:"결정적 단서",
+    traps:"예외 · 함정", t_cue:"진술 · 신호어", t_usually:"대체로", t_exc:"예외", t_why:"왜 속는가", t_src:"근거",
+    evidence:"기출 · 근거", e_row:"행", e_col:"열", e_src:"출처", e_exam:"시험 · 연도",
+    e_q:"문항", e_as:"기출 표현", e_risk:"오답 위험",
+    l_date:"날짜", l_q:"문항", l_topic:"주제", l_mine:"내 답", l_correct:"정답",
+    l_type:"오류 유형", l_missing:"놓친 변별점", l_update:"매트릭스 셀", l_retest:"재시험",
+    l2:"L2 — 시험 당일", l3:"L3 — 마지막 10분 (줄바꿈으로 구분)", l2item:"항목", l2detail:"결정적 단서",
+    saved:"자동 저장됨", copied:"복사했습니다", loaded:"불러왔습니다",
+    confirm_clear:"모든 입력을 지웁니다. 계속할까요?",
+    hint_matrix:"열은 <b>이 주제에서 시험이 실제로 가르는 축</b>이어야 합니다. 기본 열은 출발점일 뿐이니 바꾸세요.",
+    hint_err:"모든 개념 오류는 무효가 된 <b>매트릭스 셀</b>을 지목해야 합니다.",
+    hint_ess:"최대 다섯 개. 여섯 번째가 필요하다면 그중 하나는 핵심이 아니었습니다.",
+    none:"—", required:"필수 항목이 비어 있습니다",
+  },
+  en:{
+    load:"Load", sample:"Fill with sample", clear:"Clear", download:"Download YAML",
+    copy:"Copy", showyaml:"Show YAML", hideyaml:"Hide YAML", close:"Close",
+    s_exam:"Exam", s_blueprint:"Blueprint", s_topics:"Topics", s_errors:"Error log", s_compress:"Compression",
+    name:"Exam name", name_sub:"Subtitle (optional)", lang:"Document language", authority:"Awarding body", date:"Exam date",
+    passing:"Passing criterion", version:"Syllabus / version", target:"Target score", confidence:"Confidence (1–5)",
+    updated:"Last updated", subjects:"Subjects (one per line)", sources:"Sources (one per line)",
+    what_tests:"What does this exam actually test? (one per line)",
+    domain:"Domain", weight:"Weight", qtype:"Question type", priority:"Priority", last_review:"Last review",
+    high_yield:"High-yield topics", weak:"Weak topics", volatile:"Volatile topics",
+    add_domain:"Add domain", add_topic:"Add topic", add_row:"Add row", add_col:"Add column",
+    add_pair:"Add pair", add_trap:"Add trap", add_ev:"Add evidence", add_err:"Add error",
+    add_l2:"Add L2 item", del:"Delete",
+    title:"Topic title", id:"ID (a-z, 0-9, hyphen)", archetype:"Archetype", importance:"Importance",
+    frequency:"Frequency", why:"Why it matters", core_q:"Core question", key_axis:"Key comparison axis",
+    prereq:"Prerequisites (comma separated)", tsources:"Sources (comma separated)", tupdated:"Updated",
+    one_sentence:"One-sentence model", essentials:"Essential facts (max 5)",
+    matrix:"Exam Matrix", row_label:"Row header", mnote:"Note (optional)",
+    decisive:"Decisive distinction", decisive_a:"If you had ONE criterion, what would it be?",
+    pairs:"Confusion pairs", p_a:"A", p_b:"B", p_why:"Why confused", p_clue:"Decisive clue",
+    traps:"Exceptions & traps", t_cue:"Statement / cue", t_usually:"Usually", t_exc:"Exception", t_why:"Why it tricks", t_src:"Source",
+    evidence:"Question & evidence", e_row:"Row", e_col:"Column", e_src:"Source", e_exam:"Exam / year",
+    e_q:"Question", e_as:"Tested as", e_risk:"Error risk",
+    l_date:"Date", l_q:"Question", l_topic:"Topic", l_mine:"My answer", l_correct:"Correct",
+    l_type:"Error type", l_missing:"Missing distinction", l_update:"Matrix cell", l_retest:"Retest",
+    l2:"L2 — exam day", l3:"L3 — last 10 minutes (one per line)", l2item:"Item", l2detail:"Decisive clue",
+    saved:"Autosaved", copied:"Copied", loaded:"Loaded",
+    confirm_clear:"This clears everything. Continue?",
+    hint_matrix:"Columns must be <b>the axes this exam actually separates on</b>. The defaults are a starting point — replace them.",
+    hint_err:"Every conceptual mistake must name the <b>matrix cell</b> it invalidates.",
+    hint_ess:"Five maximum. If you want a sixth, one of these was not essential.",
+    none:"—", required:"A required field is empty",
+  },
+};
+
+let UI = localStorage.getItem("em.ui") || "ko";
+const t = (k) => I18N[UI][k] ?? k;
+
+/* ------------------------------------------------------------------ state */
+
+const blankTopic = (arch = "concept") => {
+  const a = ARCH[arch];
+  return {
+    id:"", title:"", archetype:arch, importance:"A", frequency:"", why:"",
+    core_question:"", key_axis:"", prerequisites:"", sources:"", updated:"",
+    one_sentence:"", essentials:["","","","",""],
+    matrix:{ row_label:"", note:"",
+      columns:a.cols.slice(0,5).map(([k,ko,en,mk])=>({key:k,label_ko:ko,label:en,mark:mk})),
+      rows:[{label:"",sub:"",cells:{}},{label:"",sub:"",cells:{}}] },
+    decisive:{ answer:"", pairs:[] },
+    traps:[], evidence:[],
+  };
+};
+
+const blankState = () => ({
+  exam:{ name:"", name_sub:"", lang:"ko", authority:"", date:"", passing:"",
+    syllabus_version:"", target_score:"", confidence:"", last_updated:"",
+    subjects:"", sources:"", what_it_tests:"",
+    blueprint:[], high_yield:"", weak:"", volatile:"" },
+  topics:[ blankTopic("concept") ],
+  error_log:[],
+  compression:{ l2:[], l3:"" },
+  open:{},
+});
+
+let S = load() || blankState();
+
+function load(){
+  try{ const r = localStorage.getItem("em.state"); return r ? JSON.parse(r) : null; }
+  catch(e){ return null; }
+}
+let saveTimer;
+function save(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{ localStorage.setItem("em.state", JSON.stringify(S)); flash(t("saved")); }catch(e){}
+  }, 400);
+}
+function flash(m){ const el=document.getElementById("msg"); el.textContent=m;
+  clearTimeout(flash._t); flash._t=setTimeout(()=>el.textContent="",1800); }
+
+/* -------------------------------------------------------------- utilities */
+
+const esc = (s)=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+const slug = (s)=>String(s||"").toLowerCase().normalize("NFKD")
+  .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
+const splitLines = (s)=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
+const splitCommas = (s)=>String(s||"").split(",").map(x=>x.trim()).filter(Boolean);
+
+/* ------------------------------------------------------------ YAML output */
+
+function needsQuote(s){
+  if(s==="") return true;
+  if(/^[\s]|[\s]$/.test(s)) return true;
+  if(/^[-?:,\[\]{}#&*!|>'"%@`]/.test(s)) return true;
+  if(/:\s/.test(s) || /\s#/.test(s)) return true;
+  if(/^(true|false|null|yes|no|on|off|~)$/i.test(s)) return true;
+  if(/^[-+]?[0-9.]+([eE][-+]?\d+)?$/.test(s)) return true;
+  return false;
+}
+function sc(v){
+  const s = String(v ?? "");
+  if(!needsQuote(s)) return s;
+  return '"' + s.replace(/\\/g,"\\\\").replace(/"/g,'\\"') + '"';
+}
+/** Long prose becomes a folded block scalar, which is how the examples read. */
+function scalar(v, indent){
+  const s = String(v ?? "");
+  if(s.length <= 78 && !s.includes("\n")) return sc(s);
+  const pad = " ".repeat(indent);
+  const words = s.replace(/\s+/g," ").trim().split(" ");
+  const out=[]; let line="";
+  for(const w of words){
+    if((line+" "+w).trim().length > 74){ out.push(line.trim()); line=w; }
+    else line += " " + w;
+  }
+  if(line.trim()) out.push(line.trim());
+  return ">-\n" + out.map(l=>pad+l).join("\n");
+}
+const listOf = (arr, indent)=> arr.length
+  ? "\n" + arr.map(x=>" ".repeat(indent)+"- "+sc(x)).join("\n")
+  : " []";
+
+function buildYaml(){
+  const e = S.exam, L=[];
+  const lang = e.lang === "en" ? "en" : "ko";
+  const lbl = (c)=> lang==="ko" ? (c.label_ko||c.label||c.key) : (c.label||c.label_ko||c.key);
+
+  L.push("# " + (e.name || "Exam Matrix"));
+  L.push("# Exam Matrix — generated by tools/editor.html");
+  L.push("");
+  L.push("exam:");
+  L.push("  name: " + sc(e.name));
+  if(e.name_sub) L.push("  name_sub: " + sc(e.name_sub));
+  L.push("  lang: " + lang);
+  if(e.authority) L.push("  authority: " + sc(e.authority));
+  if(e.date) L.push("  date: " + sc(e.date));
+  if(e.syllabus_version) L.push("  syllabus_version: " + sc(e.syllabus_version));
+  if(e.passing) L.push("  passing: " + sc(e.passing));
+  if(e.target_score!=="" ) L.push("  target_score: " + sc(e.target_score));
+  if(e.confidence) L.push("  confidence: " + Number(e.confidence));
+  if(e.last_updated) L.push("  last_updated: " + sc(e.last_updated));
+  L.push("  subjects:" + listOf(splitLines(e.subjects), 4));
+  L.push("  sources:" + listOf(splitLines(e.sources), 4));
+  const wt = splitLines(e.what_it_tests);
+  if(wt.length){ L.push("  what_it_tests:" + listOf(wt, 4)); }
+  if(e.blueprint.length){
+    L.push("  blueprint:");
+    for(const b of e.blueprint){
+      L.push("    - domain: " + sc(b.domain));
+      if(b.weight!=="") L.push("      weight: " + (isNaN(Number(b.weight))?sc(b.weight):Number(b.weight)));
+      if(b.question_type) L.push("      question_type: " + sc(b.question_type));
+      if(b.priority) L.push("      priority: " + b.priority);
+      if(b.confidence) L.push("      confidence: " + Number(b.confidence));
+      if(b.last_review) L.push("      last_review: " + sc(b.last_review));
+    }
+  }
+  L.push("  high_yield:" + listOf(splitLines(e.high_yield), 4));
+  L.push("  weak:" + listOf(splitLines(e.weak), 4));
+  L.push("  volatile:" + listOf(splitLines(e.volatile), 4));
+  L.push("");
+  L.push("topics:");
+
+  S.topics.forEach((tp, ti)=>{
+    const id = tp.id || slug(tp.title) || ("topic-"+(ti+1));
+    L.push("  - id: " + id);
+    L.push("    title: " + sc(tp.title));
+    L.push("    archetype: " + tp.archetype);
+    if(tp.importance) L.push("    importance: " + tp.importance);
+    if(tp.frequency) L.push("    frequency: " + sc(tp.frequency));
+    if(tp.why) L.push("    why: " + scalar(tp.why, 6));
+    if(tp.core_question) L.push("    core_question: " + sc(tp.core_question));
+    if(tp.key_axis) L.push("    key_axis: " + sc(tp.key_axis));
+    const pre = splitCommas(tp.prerequisites);
+    if(pre.length) L.push("    prerequisites: [" + pre.map(sc).join(", ") + "]");
+    const src = splitCommas(tp.sources);
+    if(src.length) L.push("    sources: [" + src.map(sc).join(", ") + "]");
+    if(tp.updated) L.push("    updated: " + sc(tp.updated));
+    if(tp.one_sentence) L.push("    one_sentence: " + scalar(tp.one_sentence, 6));
+    const ess = tp.essentials.map(x=>String(x||"").trim()).filter(Boolean).slice(0,5);
+    if(ess.length) L.push("    essentials:" + listOf(ess, 6));
+
+    L.push("");
+    L.push("    matrix:");
+    if(tp.matrix.row_label) L.push("      row_label: " + sc(tp.matrix.row_label));
+    if(tp.matrix.note) L.push("      note: " + sc(tp.matrix.note));
+    L.push("      columns:");
+    tp.matrix.columns.forEach(c=>{
+      const parts = ["key: "+c.key];
+      if(c.label) parts.push("label: "+sc(c.label));
+      if(c.label_ko) parts.push("label_ko: "+sc(c.label_ko));
+      parts.push("mark: "+(c.mark||"core"));
+      L.push("        - { " + parts.join(", ") + " }");
+    });
+    L.push("      rows:");
+    tp.matrix.rows.forEach(r=>{
+      L.push("        - label: " + sc(r.label));
+      if(r.sub) L.push("          sub: " + sc(r.sub));
+      const keys = tp.matrix.columns.filter(c=>{
+        const cell = r.cells[c.key]; return cell && String(cell.v||"").trim();
+      });
+      if(keys.length){
+        L.push("          cells:");
+        keys.forEach(c=>{
+          const cell = r.cells[c.key];
+          const v = String(cell.v).trim();
+          if(cell.mark && cell.mark !== c.mark){
+            L.push("            " + c.key + ": { v: " + sc(v) + ", mark: " + cell.mark + " }");
+          } else {
+            L.push("            " + c.key + ": " + sc(v));
+          }
+        });
+      }
+    });
+
+    const d = tp.decisive;
+    if(d.answer || d.pairs.length){
+      L.push("");
+      L.push("    decisive:");
+      if(d.answer) L.push("      answer: " + scalar(d.answer, 8));
+      if(d.pairs.length){
+        L.push("      pairs:");
+        d.pairs.forEach(p=>{
+          L.push("        - a: " + sc(p.a));
+          L.push("          b: " + sc(p.b));
+          if(p.why) L.push("          why: " + sc(p.why));
+          if(p.clue) L.push("          clue: " + sc(p.clue));
+        });
+      }
+    }
+    if(tp.traps.length){
+      L.push("");
+      L.push("    traps:");
+      tp.traps.forEach(x=>{
+        L.push("      - cue: " + sc(x.cue));
+        if(x.usually) L.push("        usually: " + sc(x.usually));
+        if(x.exception) L.push("        exception: " + sc(x.exception));
+        if(x.why) L.push("        why: " + sc(x.why));
+        if(x.source) L.push("        source: " + sc(x.source));
+      });
+    }
+    if(tp.evidence.length){
+      L.push("");
+      L.push("    evidence:");
+      tp.evidence.forEach(x=>{
+        L.push("      - cell: { row: " + sc(x.row) + ", column: " + (x.column||"") + " }");
+        if(x.source) L.push("        source: " + sc(x.source));
+        if(x.exam) L.push("        exam: " + sc(x.exam));
+        if(x.question) L.push("        question: " + sc(x.question));
+        if(x.tested_as) L.push("        tested_as: " + sc(x.tested_as));
+        if(x.risk) L.push("        risk: " + x.risk);
+      });
+    }
+    L.push("");
+  });
+
+  if(S.error_log.length){
+    L.push("error_log:");
+    S.error_log.forEach(x=>{
+      L.push("  - date: " + sc(x.date));
+      if(x.question) L.push("    question: " + sc(x.question));
+      if(x.topic) L.push("    topic: " + sc(x.topic));
+      if(x.mine) L.push("    mine: " + sc(x.mine));
+      if(x.correct) L.push("    correct: " + sc(x.correct));
+      if(x.error_type) L.push("    error_type: " + x.error_type);
+      if(x.missing_distinction) L.push("    missing_distinction: " + sc(x.missing_distinction));
+      if(x.mt && x.mrow && x.mcol)
+        L.push("    matrix_update: { topic: " + x.mt + ", row: " + sc(x.mrow) + ", column: " + x.mcol + " }");
+      if(x.retest) L.push("    retest: " + sc(x.retest));
+    });
+    L.push("");
+  }
+
+  const l3 = splitLines(S.compression.l3);
+  if(S.compression.l2.length || l3.length){
+    L.push("compression:");
+    if(S.compression.l2.length){
+      L.push("  l2:");
+      S.compression.l2.forEach(x=>{
+        L.push("    - item: " + sc(x.item));
+        if(x.detail) L.push("      detail: " + sc(x.detail));
+        if(x.mark) L.push("      mark: " + x.mark);
+      });
+    } else L.push("  l2: []");
+    L.push("  l3:" + listOf(l3, 4));
+    L.push("");
+  }
+  L.push("blank_rows:");
+  L.push("  error_log: 9");
+  return L.join("\n") + "\n";
+}
+
+/* ------------------------------------------------------------ YAML import */
+
+function importYaml(text){
+  const d = jsyaml.load(text);
+  if(!d || !d.exam) throw new Error("exam: block not found");
+  const e = d.exam;
+  const st = blankState();
+  st.exam = {
+    name:e.name||"", name_sub:e.name_sub||"", lang:e.lang==="en"?"en":"ko",
+    authority:e.authority||"", date:e.date||"", passing:e.passing||"",
+    syllabus_version:e.syllabus_version||"", target_score:e.target_score??"",
+    confidence:e.confidence||"", last_updated:e.last_updated||"",
+    subjects:(e.subjects||[]).join("\n"), sources:(e.sources||[]).join("\n"),
+    what_it_tests:(e.what_it_tests||[]).join("\n"),
+    blueprint:(e.blueprint||[]).map(b=>({domain:b.domain||"",weight:b.weight??"",
+      question_type:b.question_type||"",priority:b.priority||"",confidence:b.confidence||"",
+      last_review:b.last_review||""})),
+    high_yield:(e.high_yield||[]).join("\n"), weak:(e.weak||[]).join("\n"),
+    volatile:(e.volatile||[]).join("\n"),
+  };
+  st.topics = (d.topics||[]).map(tp=>{
+    const m = tp.matrix||{};
+    const cols = (m.columns||[]).map(c=>({key:c.key,label:c.label||"",label_ko:c.label_ko||"",mark:c.mark||"core"}));
+    const rows = (m.rows||[]).map(r=>{
+      const cells={};
+      for(const c of cols){
+        const raw = (r.cells||{})[c.key];
+        if(raw===undefined||raw===null) { cells[c.key]={v:"",mark:c.mark}; continue; }
+        if(typeof raw === "object") cells[c.key]={v:String(raw.v??raw.value??""),mark:raw.mark||c.mark};
+        else cells[c.key]={v:String(raw),mark:c.mark};
+      }
+      return {label:r.label||"",sub:r.sub||"",cells};
+    });
+    const ess = (tp.essentials||[]).slice(0,5);
+    while(ess.length<5) ess.push("");
+    return {
+      id:tp.id||"", title:tp.title||"", archetype:ARCH[tp.archetype]?tp.archetype:"concept",
+      importance:tp.importance||"A", frequency:tp.frequency||"", why:tp.why||"",
+      core_question:tp.core_question||"", key_axis:tp.key_axis||"",
+      prerequisites:(tp.prerequisites||[]).join(", "), sources:(tp.sources||[]).join(", "),
+      updated:tp.updated||"", one_sentence:tp.one_sentence||"", essentials:ess,
+      matrix:{row_label:m.row_label||"",note:m.note||"",columns:cols,rows:rows},
+      decisive:{answer:(tp.decisive||{}).answer||"",
+        pairs:((tp.decisive||{}).pairs||[]).map(p=>({a:p.a||"",b:p.b||"",why:p.why||"",clue:p.clue||""}))},
+      traps:(tp.traps||[]).map(x=>({cue:x.cue||"",usually:x.usually||"",exception:x.exception||"",
+        why:x.why||"",source:x.source||""})),
+      evidence:(tp.evidence||[]).map(x=>({row:(x.cell||{}).row||"",column:(x.cell||{}).column||"",
+        source:x.source||"",exam:x.exam||"",question:x.question||"",tested_as:x.tested_as||"",risk:x.risk||""})),
+    };
+  });
+  if(!st.topics.length) st.topics=[blankTopic()];
+  st.error_log = (d.error_log||[]).map(x=>({date:x.date||"",question:x.question||"",topic:x.topic||"",
+    mine:x.mine||"",correct:x.correct||"",error_type:x.error_type||"",
+    missing_distinction:x.missing_distinction||"",
+    mt:(x.matrix_update||{}).topic||"", mrow:(x.matrix_update||{}).row||"",
+    mcol:(x.matrix_update||{}).column||"", retest:x.retest||""}));
+  st.compression = {
+    l2:((d.compression||{}).l2||[]).map(x=>({item:x.item||"",detail:x.detail||"",mark:x.mark||""})),
+    l3:(((d.compression||{}).l3)||[]).join("\n"),
+  };
+  S = st;
+  render(); save();
+}
+
+/* --------------------------------------------------------------- rendering */
+
+function card(id, title, count, bodyHtml){
+  const closed = S.open[id] === false ? " closed" : "";
+  return `<section class="card${closed}" data-card="${id}">
+    <h2 data-toggle="${id}">${esc(title)}${count!=null?`<span class="cnt">${count}</span>`:""}
+      <span class="tw">${closed?"▸":"▾"}</span></h2>
+    <div class="body">${bodyHtml}</div></section>`;
+}
+function fld(label, path, type="text", opts){
+  const v = get(path);
+  if(type==="textarea") return `<label class="f"><span>${esc(label)}</span>
+    <textarea data-p="${path}">${esc(v)}</textarea></label>`;
+  if(type==="select") return `<label class="f"><span>${esc(label)}</span>
+    <select data-p="${path}">${opts.map(o=>{
+      const [val,txt]=Array.isArray(o)?o:[o,o];
+      return `<option value="${esc(val)}"${String(v)===String(val)?" selected":""}>${esc(txt)}</option>`;
+    }).join("")}</select></label>`;
+  return `<label class="f"><span>${esc(label)}</span>
+    <input type="${type}" data-p="${path}" value="${esc(v)}"></label>`;
+}
+function get(path){
+  return path.split(".").reduce((o,k)=>{
+    if(o==null) return "";
+    const i = /^\d+$/.test(k) ? Number(k) : k;
+    return o[i];
+  }, S) ?? "";
+}
+function set(path, val){
+  const ks = path.split(".");
+  let o = S;
+  for(let i=0;i<ks.length-1;i++){
+    const k = /^\d+$/.test(ks[i]) ? Number(ks[i]) : ks[i];
+    o = o[k];
+  }
+  const last = ks[ks.length-1];
+  o[/^\d+$/.test(last)?Number(last):last] = val;
+}
+
+function matrixEditor(tp, ti){
+  const cols = tp.matrix.columns;
+  const head = cols.map((c,ci)=>`<th>
+    <div class="colhd">
+      <input type="text" data-p="topics.${ti}.matrix.columns.${ci}.${S.exam.lang==="ko"?"label_ko":"label"}"
+        value="${esc(S.exam.lang==="ko"?(c.label_ko||""):(c.label||""))}" placeholder="${esc(t("e_col"))}">
+      <div class="rw">
+        <select class="mk mk-${c.mark}" data-p="topics.${ti}.matrix.columns.${ci}.mark">
+          ${MARKS.map(m=>`<option value="${m}"${c.mark===m?" selected":""}>${m}</option>`).join("")}
+        </select>
+        <button class="sm dg" data-act="delcol" data-t="${ti}" data-c="${ci}">✕</button>
+      </div>
+    </div></th>`).join("");
+
+  const body = tp.matrix.rows.map((r,ri)=>{
+    const cells = cols.map((c,ci)=>{
+      const cell = r.cells[c.key] || (r.cells[c.key]={v:"",mark:c.mark});
+      const cls = cell.mark && cell.mark!=="core" ? ` class="c-${cell.mark}"` : "";
+      return `<td${cls}>
+        <textarea data-cell="${ti}.${ri}.${c.key}" placeholder="">${esc(cell.v)}</textarea>
+        <select class="mk mk-${cell.mark}" data-cellmark="${ti}.${ri}.${c.key}">
+          ${MARKS.map(m=>`<option value="${m}"${cell.mark===m?" selected":""}>${m}</option>`).join("")}
+        </select></td>`;
+    }).join("");
+    return `<tr><td class="rl">
+        <input type="text" data-p="topics.${ti}.matrix.rows.${ri}.label" value="${esc(r.label)}" placeholder="${esc(t("e_row"))}">
+        <input type="text" data-p="topics.${ti}.matrix.rows.${ri}.sub" value="${esc(r.sub)}" placeholder="sub" style="margin-top:4px;font-size:11.5px">
+        <button class="sm dg" data-act="delrow" data-t="${ti}" data-r="${ri}" style="margin-top:4px">✕</button>
+      </td>${cells}</tr>`;
+  }).join("");
+
+  return `<p class="hint">${t("hint_matrix")}</p>
+    <div class="grid g2" style="margin-bottom:9px">
+      ${fld(t("row_label"), `topics.${ti}.matrix.row_label`)}
+      ${fld(t("mnote"), `topics.${ti}.matrix.note`)}
+    </div>
+    <div class="mxwrap"><table class="mx">
+      <thead><tr><th class="rl">${esc(t("row_label"))}</th>${head}</tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>
+    <div style="margin-top:8px;display:flex;gap:7px">
+      <button class="sm" data-act="addrow" data-t="${ti}">+ ${esc(t("add_row"))}</button>
+      <button class="sm" data-act="addcol" data-t="${ti}">+ ${esc(t("add_col"))}</button>
+    </div>`;
+}
+
+function topicCard(tp, ti){
+  const rowOpts = tp.matrix.rows.map(r=>r.label).filter(Boolean);
+  const colOpts = tp.matrix.columns.map(c=>[c.key, (S.exam.lang==="ko"?c.label_ko:c.label)||c.key]);
+  const body = `
+    <div class="grid g3">
+      ${fld(t("title"), `topics.${ti}.title`)}
+      ${fld(t("id"), `topics.${ti}.id`)}
+      ${fld(t("archetype"), `topics.${ti}.archetype`, "select",
+        Object.keys(ARCH).map(k=>[k, ARCH[k][UI]||ARCH[k].en]))}
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      ${fld(t("importance"), `topics.${ti}.importance`, "select", ["A","B","C"])}
+      ${fld(t("frequency"), `topics.${ti}.frequency`)}
+      ${fld(t("tupdated"), `topics.${ti}.updated`, "date")}
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      ${fld(t("key_axis"), `topics.${ti}.key_axis`)}
+      ${fld(t("core_q"), `topics.${ti}.core_question`)}
+    </div>
+    <div class="grid g2" style="margin-top:10px">
+      ${fld(t("prereq"), `topics.${ti}.prerequisites`)}
+      ${fld(t("tsources"), `topics.${ti}.sources`)}
+    </div>
+    <div style="margin-top:10px">${fld(t("why"), `topics.${ti}.why`, "textarea")}</div>
+    <div style="margin-top:10px">${fld(t("one_sentence"), `topics.${ti}.one_sentence`, "textarea")}</div>
+
+    <h3 style="font-size:12px;margin:16px 0 4px">${esc(t("essentials"))}</h3>
+    <p class="hint">${t("hint_ess")}</p>
+    ${tp.essentials.map((v,i)=>`<div style="display:flex;gap:7px;align-items:center;margin-bottom:6px">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);width:14px">${i+1}</span>
+      <input type="text" data-p="topics.${ti}.essentials.${i}" value="${esc(v)}"></div>`).join("")}
+
+    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("matrix"))}</h3>
+    ${matrixEditor(tp, ti)}
+
+    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("decisive"))}</h3>
+    ${fld(t("decisive_a"), `topics.${ti}.decisive.answer`, "textarea")}
+    ${tp.decisive.pairs.map((p,pi)=>`<div class="item" style="margin-top:9px">
+      <div class="ih"><span class="n">${pi+1}</span><span class="t">${esc(p.a||"")} / ${esc(p.b||"")}</span>
+        <button class="sm dg" data-act="delpair" data-t="${ti}" data-i="${pi}">${esc(t("del"))}</button></div>
+      <div class="grid g2">
+        ${fld(t("p_a"), `topics.${ti}.decisive.pairs.${pi}.a`)}
+        ${fld(t("p_b"), `topics.${ti}.decisive.pairs.${pi}.b`)}
+      </div>
+      <div class="grid g2" style="margin-top:8px">
+        ${fld(t("p_why"), `topics.${ti}.decisive.pairs.${pi}.why`, "textarea")}
+        ${fld(t("p_clue"), `topics.${ti}.decisive.pairs.${pi}.clue`, "textarea")}
+      </div></div>`).join("")}
+    <button class="sm addbtn" data-act="addpair" data-t="${ti}">+ ${esc(t("add_pair"))}</button>
+
+    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("traps"))}</h3>
+    ${tp.traps.map((x,xi)=>`<div class="item">
+      <div class="ih"><span class="n">${xi+1}</span><span class="t">${esc(x.cue||"")}</span>
+        <button class="sm dg" data-act="deltrap" data-t="${ti}" data-i="${xi}">${esc(t("del"))}</button></div>
+      ${fld(t("t_cue"), `topics.${ti}.traps.${xi}.cue`, "textarea")}
+      <div class="grid g2" style="margin-top:8px">
+        ${fld(t("t_usually"), `topics.${ti}.traps.${xi}.usually`)}
+        ${fld(t("t_src"), `topics.${ti}.traps.${xi}.source`)}
+      </div>
+      <div class="grid g2" style="margin-top:8px">
+        ${fld(t("t_exc"), `topics.${ti}.traps.${xi}.exception`, "textarea")}
+        ${fld(t("t_why"), `topics.${ti}.traps.${xi}.why`, "textarea")}
+      </div></div>`).join("")}
+    <button class="sm addbtn" data-act="addtrap" data-t="${ti}">+ ${esc(t("add_trap"))}</button>
+
+    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("evidence"))}</h3>
+    ${tp.evidence.map((x,xi)=>`<div class="item">
+      <div class="ih"><span class="n">${xi+1}</span><span class="t">${esc(x.row||"")} · ${esc(x.column||"")}</span>
+        <button class="sm dg" data-act="delev" data-t="${ti}" data-i="${xi}">${esc(t("del"))}</button></div>
+      <div class="grid g3">
+        ${fld(t("e_row"), `topics.${ti}.evidence.${xi}.row`, "select", [["",t("none")]].concat(rowOpts.map(r=>[r,r])))}
+        ${fld(t("e_col"), `topics.${ti}.evidence.${xi}.column`, "select", [["",t("none")]].concat(colOpts))}
+        ${fld(t("e_risk"), `topics.${ti}.evidence.${xi}.risk`, "select", [["",t("none")],["high","high"],["mid","mid"],["low","low"]])}
+      </div>
+      <div class="grid g3" style="margin-top:8px">
+        ${fld(t("e_src"), `topics.${ti}.evidence.${xi}.source`)}
+        ${fld(t("e_exam"), `topics.${ti}.evidence.${xi}.exam`)}
+        ${fld(t("e_q"), `topics.${ti}.evidence.${xi}.question`)}
+      </div>
+      <div style="margin-top:8px">${fld(t("e_as"), `topics.${ti}.evidence.${xi}.tested_as`, "textarea")}</div>
+    </div>`).join("")}
+    <button class="sm addbtn" data-act="addev" data-t="${ti}">+ ${esc(t("add_ev"))}</button>
+
+    <div style="margin-top:18px;border-top:1px solid var(--hair);padding-top:10px">
+      <button class="sm dg" data-act="deltopic" data-t="${ti}">${esc(t("del"))} — ${esc(tp.title||t("s_topics"))}</button>
+    </div>`;
+  return card("topic"+ti, `${String(ti+1).padStart(2,"0")} · ${tp.title || t("s_topics")}`,
+    `${tp.matrix.rows.length}×${tp.matrix.columns.length}`, body);
+}
+
+function render(){
+  document.documentElement.lang = UI;
+  document.getElementById("subtitle").textContent = S.exam.name || "";
+  document.querySelectorAll("[data-i]").forEach(b=>b.textContent = t(b.dataset.i));
+  document.getElementById("btnLang").textContent = UI==="ko" ? "EN" : "한국어";
+  document.getElementById("btnYamlClose").textContent = t("close");
+
+  const topicOpts = S.topics.map((x,i)=>[x.id||slug(x.title)||("topic-"+(i+1)), x.title||("#"+(i+1))]);
+
+  const exam = card("exam", t("s_exam"), null, `
+    <div class="grid g3">
+      ${fld(t("name"), "exam.name")}
+      ${fld(t("name_sub"), "exam.name_sub")}
+      ${fld(t("lang"), "exam.lang", "select", [["ko","한국어"],["en","English"]])}
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      ${fld(t("authority"), "exam.authority")}
+      ${fld(t("date"), "exam.date", "date")}
+      ${fld(t("updated"), "exam.last_updated", "date")}
+    </div>
+    <div class="grid g3" style="margin-top:10px">
+      ${fld(t("passing"), "exam.passing")}
+      ${fld(t("target"), "exam.target_score")}
+      ${fld(t("confidence"), "exam.confidence", "select", [["",t("none")],1,2,3,4,5])}
+    </div>
+    <div style="margin-top:10px">${fld(t("version"), "exam.syllabus_version")}</div>
+    <div class="grid g2" style="margin-top:10px">
+      ${fld(t("subjects"), "exam.subjects", "textarea")}
+      ${fld(t("sources"), "exam.sources", "textarea")}
+    </div>
+    <div style="margin-top:10px">${fld(t("what_tests"), "exam.what_it_tests", "textarea")}</div>`);
+
+  const bp = card("bp", t("s_blueprint"), S.exam.blueprint.length, `
+    ${S.exam.blueprint.map((b,i)=>`<div class="item">
+      <div class="ih"><span class="n">${i+1}</span><span class="t">${esc(b.domain||"")}</span>
+        <button class="sm dg" data-act="deldomain" data-i="${i}">${esc(t("del"))}</button></div>
+      <div class="grid g3">
+        ${fld(t("domain"), `exam.blueprint.${i}.domain`)}
+        ${fld(t("weight"), `exam.blueprint.${i}.weight`)}
+        ${fld(t("qtype"), `exam.blueprint.${i}.question_type`)}
+      </div>
+      <div class="grid g3" style="margin-top:8px">
+        ${fld(t("priority"), `exam.blueprint.${i}.priority`, "select", ["A","B","C"])}
+        ${fld(t("confidence"), `exam.blueprint.${i}.confidence`, "select", [["",t("none")],1,2,3,4,5])}
+        ${fld(t("last_review"), `exam.blueprint.${i}.last_review`, "date")}
+      </div></div>`).join("")}
+    <button class="sm addbtn" data-act="adddomain">+ ${esc(t("add_domain"))}</button>
+    <div class="grid g3" style="margin-top:14px">
+      ${fld(t("high_yield"), "exam.high_yield", "textarea")}
+      ${fld(t("weak"), "exam.weak", "textarea")}
+      ${fld(t("volatile"), "exam.volatile", "textarea")}
+    </div>`);
+
+  const errs = card("errors", t("s_errors"), S.error_log.length, `
+    <p class="hint">${t("hint_err")}</p>
+    ${S.error_log.map((x,i)=>{
+      const tp = S.topics.find(z=>(z.id||slug(z.title))===x.mt);
+      const rowOpts = tp ? tp.matrix.rows.map(r=>r.label).filter(Boolean) : [];
+      const colOpts = tp ? tp.matrix.columns.map(c=>[c.key,(S.exam.lang==="ko"?c.label_ko:c.label)||c.key]) : [];
+      return `<div class="item">
+      <div class="ih"><span class="n">${i+1}</span><span class="t">${esc(x.question||"")}</span>
+        <button class="sm dg" data-act="delerr" data-i="${i}">${esc(t("del"))}</button></div>
+      <div class="grid g3">
+        ${fld(t("l_date"), `error_log.${i}.date`, "date")}
+        ${fld(t("l_q"), `error_log.${i}.question`)}
+        ${fld(t("l_topic"), `error_log.${i}.topic`)}
+      </div>
+      <div class="grid g3" style="margin-top:8px">
+        ${fld(t("l_mine"), `error_log.${i}.mine`)}
+        ${fld(t("l_correct"), `error_log.${i}.correct`)}
+        ${fld(t("l_type"), `error_log.${i}.error_type`, "select", [["",t("none")]].concat(ETYPES.map(e=>[e,e])))}
+      </div>
+      <div style="margin-top:8px">${fld(t("l_missing"), `error_log.${i}.missing_distinction`, "textarea")}</div>
+      <div class="grid g3" style="margin-top:8px">
+        ${fld(t("l_update"), `error_log.${i}.mt`, "select", [["",t("none")]].concat(topicOpts))}
+        ${fld(t("e_row"), `error_log.${i}.mrow`, "select", [["",t("none")]].concat(rowOpts.map(r=>[r,r])))}
+        ${fld(t("e_col"), `error_log.${i}.mcol`, "select", [["",t("none")]].concat(colOpts))}
+      </div>
+      <div style="margin-top:8px;max-width:220px">${fld(t("l_retest"), `error_log.${i}.retest`, "date")}</div>
+    </div>`;}).join("")}
+    <button class="sm addbtn" data-act="adderr">+ ${esc(t("add_err"))}</button>`);
+
+  const comp = card("comp", t("s_compress"), S.compression.l2.length, `
+    <h3 style="font-size:12px;margin:0 0 8px">${esc(t("l2"))}</h3>
+    ${S.compression.l2.map((x,i)=>`<div class="item">
+      <div class="ih"><span class="n">${i+1}</span><span class="t">${esc(x.item||"")}</span>
+        <button class="sm dg" data-act="dell2" data-i="${i}">${esc(t("del"))}</button></div>
+      <div class="grid g3">
+        ${fld(t("l2item"), `compression.l2.${i}.item`)}
+        ${fld(t("l2detail"), `compression.l2.${i}.detail`)}
+        ${fld("mark", `compression.l2.${i}.mark`, "select", [["",t("none")]].concat(MARKS.map(m=>[m,m])))}
+      </div></div>`).join("")}
+    <button class="sm addbtn" data-act="addl2">+ ${esc(t("add_l2"))}</button>
+    <div style="margin-top:14px">${fld(t("l3"), "compression.l3", "textarea")}</div>`);
+
+  document.getElementById("app").innerHTML =
+    exam + bp +
+    `<h2 style="font-size:13px;margin:18px 0 9px;letter-spacing:.02em">${esc(t("s_topics"))}</h2>` +
+    S.topics.map(topicCard).join("") +
+    `<button class="addbtn" data-act="addtopic" style="margin-bottom:16px">+ ${esc(t("add_topic"))}</button>` +
+    errs + comp;
+
+  document.getElementById("yamlOut").textContent = buildYaml();
+}
+
+/* ----------------------------------------------------------------- events */
+
+document.getElementById("app").addEventListener("input", (ev)=>{
+  const el = ev.target;
+  if(el.dataset.p){ set(el.dataset.p, el.value); save();
+    document.getElementById("yamlOut").textContent = buildYaml();
+    if(/topics\.\d+\.title|exam\.name/.test(el.dataset.p)) softLabels();
+    return; }
+  if(el.dataset.cell){
+    const [ti,ri,key] = el.dataset.cell.split(".");
+    S.topics[ti].matrix.rows[ri].cells[key].v = el.value;
+    save(); document.getElementById("yamlOut").textContent = buildYaml(); return;
+  }
+});
+document.getElementById("app").addEventListener("change", (ev)=>{
+  const el = ev.target;
+  if(el.dataset.cellmark){
+    const [ti,ri,key] = el.dataset.cellmark.split(".");
+    S.topics[ti].matrix.rows[ri].cells[key].mark = el.value;
+    render(); save(); return;
+  }
+  if(el.dataset.p && (/\.mark$|archetype$|exam\.lang$/.test(el.dataset.p))){
+    if(/archetype$/.test(el.dataset.p)){
+      const ti = Number(el.dataset.p.split(".")[1]);
+      const a = ARCH[el.value];
+      const tp = S.topics[ti];
+      // Only replace the axes when the learner has not written any yet.
+      const untouched = tp.matrix.rows.every(r=>Object.values(r.cells||{}).every(c=>!String(c.v||"").trim()));
+      if(untouched){
+        tp.matrix.columns = a.cols.slice(0,5).map(([k,ko,en,mk])=>({key:k,label_ko:ko,label:en,mark:mk}));
+        tp.matrix.rows.forEach(r=>{ r.cells={}; });
+        if(!tp.matrix.row_label) tp.matrix.row_label = a.row[S.exam.lang==="ko"?"ko":"en"];
+      }
+    }
+    render(); save(); return;
+  }
+});
+document.getElementById("app").addEventListener("click", (ev)=>{
+  const tg = ev.target.closest("[data-toggle]");
+  if(tg){ const id=tg.dataset.toggle; S.open[id] = S.open[id]===false; render(); save(); return; }
+  const b = ev.target.closest("[data-act]");
+  if(!b) return;
+  const a = b.dataset.act, ti = Number(b.dataset.t), i = Number(b.dataset.i);
+  const tp = S.topics[ti];
+  if(a==="addtopic") S.topics.push(blankTopic(S.topics.at(-1)?.archetype || "concept"));
+  if(a==="deltopic" && confirm(t("confirm_clear"))) S.topics.splice(ti,1);
+  if(a==="addrow") tp.matrix.rows.push({label:"",sub:"",cells:{}});
+  if(a==="delrow") tp.matrix.rows.splice(Number(b.dataset.r),1);
+  if(a==="addcol"){
+    let n = tp.matrix.columns.length+1, key = "col"+n;
+    while(tp.matrix.columns.some(c=>c.key===key)) key = "col"+(++n);
+    tp.matrix.columns.push({key,label:"",label_ko:"",mark:"core"});
+  }
+  if(a==="delcol") tp.matrix.columns.splice(Number(b.dataset.c),1);
+  if(a==="addpair") tp.decisive.pairs.push({a:"",b:"",why:"",clue:""});
+  if(a==="delpair") tp.decisive.pairs.splice(i,1);
+  if(a==="addtrap") tp.traps.push({cue:"",usually:"",exception:"",why:"",source:""});
+  if(a==="deltrap") tp.traps.splice(i,1);
+  if(a==="addev") tp.evidence.push({row:"",column:"",source:"",exam:"",question:"",tested_as:"",risk:""});
+  if(a==="delev") tp.evidence.splice(i,1);
+  if(a==="adddomain") S.exam.blueprint.push({domain:"",weight:"",question_type:"",priority:"A",confidence:"",last_review:""});
+  if(a==="deldomain") S.exam.blueprint.splice(i,1);
+  if(a==="adderr") S.error_log.push({date:"",question:"",topic:"",mine:"",correct:"",error_type:"",
+    missing_distinction:"",mt:"",mrow:"",mcol:"",retest:""});
+  if(a==="delerr") S.error_log.splice(i,1);
+  if(a==="addl2") S.compression.l2.push({item:"",detail:"",mark:""});
+  if(a==="dell2") S.compression.l2.splice(i,1);
+  if(!S.topics.length) S.topics=[blankTopic()];
+  render(); save();
+});
+
+/** Cheap partial update so typing a title does not rebuild the whole DOM. */
+function softLabels(){
+  document.getElementById("subtitle").textContent = S.exam.name || "";
+  document.querySelectorAll("[data-card^=topic]").forEach((el)=>{
+    const ti = Number(el.dataset.card.replace("topic",""));
+    const h = el.querySelector("h2");
+    if(h && S.topics[ti]) h.childNodes[0].nodeValue =
+      `${String(ti+1).padStart(2,"0")} · ${S.topics[ti].title || t("s_topics")}`;
+  });
+}
+
+document.getElementById("btnLang").onclick = ()=>{
+  UI = UI==="ko" ? "en" : "ko"; localStorage.setItem("em.ui", UI); render();
+};
+document.getElementById("btnYaml").onclick = ()=>{
+  const p = document.getElementById("yamlPane");
+  p.classList.toggle("hidden");
+  document.getElementById("btnYaml").textContent = p.classList.contains("hidden") ? t("showyaml") : t("hideyaml");
+};
+document.getElementById("btnYamlClose").onclick = ()=>{
+  document.getElementById("yamlPane").classList.add("hidden");
+  document.getElementById("btnYaml").textContent = t("showyaml");
+};
+document.getElementById("btnDl").onclick = ()=>{
+  const name = (slug(S.exam.name) || "exam") + ".yaml";
+  const blob = new Blob([buildYaml()], {type:"text/yaml;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+};
+document.getElementById("btnCopy").onclick = async ()=>{
+  try{ await navigator.clipboard.writeText(buildYaml()); flash(t("copied")); }
+  catch(e){ document.getElementById("yamlPane").classList.remove("hidden"); }
+};
+document.getElementById("btnLoad").onclick = ()=>document.getElementById("fileIn").click();
+document.getElementById("fileIn").onchange = (ev)=>{
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try{ importYaml(String(r.result)); flash(t("loaded")); }
+    catch(err){ alert("YAML: " + err.message); } };
+  r.readAsText(f, "utf-8");
+  ev.target.value = "";
+};
+document.getElementById("btnClear").onclick = ()=>{
+  if(confirm(t("confirm_clear"))){ S = blankState(); render(); save(); }
+};
+document.getElementById("btnSample").onclick = ()=>{ S = sampleState(); render(); save(); };
+
+function sampleState(){
+  const s = blankState();
+  s.exam.name = "정보처리기사 필기";
+  s.exam.lang = "ko";
+  s.exam.authority = "한국산업인력공단";
+  s.exam.subjects = "소프트웨어 설계\n데이터베이스 구축";
+  s.exam.what_it_tests = "용어의 뜻이 아니라 유사 기술 사이의 선택 근거를 아는지\n장점만 외운 수험생이 한계를 묻는 선지에서 걸리는지";
+  const tp = blankTopic("it");
+  tp.id = "tcp-udp"; tp.title = "TCP vs UDP"; tp.importance = "A";
+  tp.key_axis = "연결 설정 여부 → 신뢰성 · 순서 · 오버헤드";
+  tp.one_sentence = "TCP는 연결을 먼저 맺고 확인응답과 재전송으로 신뢰성과 순서를 보장하는 대신 오버헤드가 크고, UDP는 연결 없이 그냥 보내서 빠른 대신 아무것도 보장하지 않는다.";
+  tp.essentials = ["TCP 헤더는 20바이트, UDP 헤더는 8바이트다.","순서 보장은 TCP만 한다.",
+    "연결은 3-way, 종료는 4-way handshake.","UDP도 체크섬은 있다.","흐름·혼잡 제어는 TCP만 수행한다."];
+  tp.matrix.row_label = "프로토콜";
+  tp.matrix.columns = [
+    {key:"conn",label_ko:"연결 방식",label:"Connection",mark:"distinction"},
+    {key:"reliable",label_ko:"신뢰성",label:"Reliability",mark:"distinction"},
+    {key:"header",label_ko:"헤더 크기",label:"Header size",mark:"trap"},
+    {key:"usecase",label_ko:"사용 예",label:"Use cases",mark:"core"},
+  ];
+  tp.matrix.rows = [
+    {label:"TCP",sub:"Transmission Control Protocol",cells:{
+      conn:{v:"연결형 — 3-way handshake",mark:"distinction"},
+      reliable:{v:"확인응답(ACK) + 재전송으로 보장",mark:"distinction"},
+      header:{v:"20바이트 (옵션 제외)",mark:"trap"},
+      usecase:{v:"HTTP, FTP, SMTP, SSH",mark:"core"}}},
+    {label:"UDP",sub:"User Datagram Protocol",cells:{
+      conn:{v:"비연결형 — handshake 없음",mark:"distinction"},
+      reliable:{v:"보장하지 않음 (재전송 없음)",mark:"distinction"},
+      header:{v:"8바이트",mark:"trap"},
+      usecase:{v:"DNS, DHCP, 스트리밍, VoIP",mark:"core"}}},
+  ];
+  tp.decisive.answer = "데이터를 보내기 전에 연결을 맺는가. 맺으면 상태를 유지할 수 있으므로 확인응답·재전송·순서·흐름 제어가 전부 가능해진다.";
+  tp.decisive.pairs = [{a:"TCP 헤더 20바이트",b:"UDP 헤더 8바이트",
+    why:"둘 다 짝수 바이트라 숫자만 외우면 뒤바뀐다.",clue:"기능이 많은 쪽이 헤더가 크다 — TCP가 20."}];
+  tp.traps = [{cue:"UDP는 오류 검출 기능이 없다.",usually:"거짓",
+    exception:"UDP 헤더에도 체크섬 필드가 있어 오류 검출은 수행한다",
+    why:"신뢰성이 없다는 사실을 오류 검출이 없다는 말로 확장해 버린다.",source:"RFC 768"}];
+  s.topics = [tp];
+  return s;
+}
+
+render();
+</script>
+</body>
+</html>
