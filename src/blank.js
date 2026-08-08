@@ -115,7 +115,8 @@ const field = (label, span = 1) =>
      <dt>${esc(label)}</dt><dd class="fill"></dd></div>`;
 
 const legend = (t) => `<div class="legend">${Object.entries(MARKERS)
-  .map(([k, m]) => `<span><b>${m.code}</b> ${m.sigil}</span>`).join('')}</div>`;
+  .map(([k, m]) => `<span>${m.sigil} <b>${esc(t.f_topic === '주제' ? m.label_ko : m.code)}</b></span>`)
+  .join('')}</div>`;
 
 /** n ruled lines, for prose the learner writes. */
 const lines = (h) => `<div class="lines" style="min-height:${h}mm"></div>`;
@@ -161,7 +162,8 @@ export const PAGES = {
     <table class="block"><thead><tr>
       <th style="width:18%">${t.marker_hint}</th><th>${t.brand}</th></tr></thead>
       <tbody>${Object.entries(MARKERS).map(([k, m]) => `<tr style="height:11mm">
-        <td class="m-${k}"><span class="chip">${m.sigil} ${m.code}</span></td><td></td></tr>`).join('')}</tbody>
+        <td class="m-${k}"><span class="chip">${m.sigil} ${esc(t.f_topic === '주제' ? m.label_ko : m.code)}</span></td>
+        <td></td></tr>`).join('')}</tbody>
     </table>` }),
 
   blueprint: (t) => ({ land: false, html: `

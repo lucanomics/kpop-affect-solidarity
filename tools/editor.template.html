@@ -3,359 +3,385 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Exam Matrix — 입력기 / Editor</title>
+<title>시험표 만들기</title>
 <style>
 :root{
-  --ink:#14171c; --ink-2:#3d434d; --muted:#6b727d;
-  --rule:#c3c9d1; --hair:#e2e6ea; --accent:#1f4b73;
-  --bg:#f6f7f9; --panel:#fff; --tint:#eceef2;
-  --sans:"Noto Sans KR","Noto Sans CJK KR",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  --mono:ui-monospace,SFMono-Regular,Menlo,"Noto Sans Mono CJK KR",monospace;
+  --ink:#15181d; --ink-2:#3f454f; --muted:#6d7480; --rule:#c6ccd4; --hair:#e4e8ec;
+  --accent:#1f5fa8; --accent-d:#17497f; --bg:#f4f6f8; --panel:#fff;
+  --tint:#eef1f5; --good:#1c7a4a; --warn:#8a6d1f;
+  --sans:"Pretendard","Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:10px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{font-family:var(--sans);font-size:14px;line-height:1.5;color:var(--ink);background:var(--bg);
-  word-break:keep-all;overflow-wrap:break-word}
+body{font-family:var(--sans);font-size:16px;line-height:1.6;color:var(--ink);background:var(--bg);
+  word-break:keep-all;overflow-wrap:break-word;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font-family:inherit;font-size:16px;color:var(--ink)}
 
-/* ---- top bar ---- */
-header.bar{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;
-  display:flex;align-items:center;gap:12px;padding:10px 16px;flex-wrap:wrap}
-header.bar h1{font-size:14px;margin:0;font-weight:700;letter-spacing:.02em}
+/* ---------------------------------------------------------------- top bar */
+header.bar{position:sticky;top:0;z-index:60;background:var(--ink);color:#fff;
+  display:flex;align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap}
+header.bar .logo{font-size:15px;font-weight:800;letter-spacing:-.01em}
 header.bar .sp{flex:1}
-header.bar .st{font-size:11px;color:#aeb6c0}
-button,select,input,textarea{font-family:inherit;font-size:13px;color:var(--ink)}
-button{background:#fff;border:1px solid var(--rule);border-radius:5px;padding:5px 11px;cursor:pointer}
-button:hover{background:var(--tint)}
-button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
-button.pri:hover{filter:brightness(1.15)}
-button.gh{background:transparent;border-color:#4a525d;color:#fff}
-button.gh:hover{background:#2a3038}
-button.sm{padding:2px 7px;font-size:11px;border-radius:4px}
-button.dg{color:#8a2b2b;border-color:#d8bcbc}
+.tb{background:transparent;border:1px solid #4b535e;color:#fff;border-radius:8px;
+  padding:6px 12px;font-size:13px;cursor:pointer}
+.tb:hover{background:#272d36}
+.tb.on{background:#fff;color:var(--ink);border-color:#fff;font-weight:700}
 
-/* ---- layout ---- */
-main{max-width:1180px;margin:0 auto;padding:18px 16px 120px}
-section.card{background:var(--panel);border:1px solid var(--hair);border-radius:8px;margin-bottom:14px}
-section.card>h2{margin:0;padding:11px 14px;font-size:13px;font-weight:700;letter-spacing:.02em;
-  border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:8px;cursor:pointer;
-  background:linear-gradient(180deg,#fff,#fafbfc);border-radius:8px 8px 0 0}
-section.card>h2 .cnt{font-weight:400;color:var(--muted);font-size:11px}
-section.card>h2 .tw{margin-left:auto;color:var(--muted);font-size:11px}
-section.card>.body{padding:14px}
-section.card.closed>.body{display:none}
-section.card.closed>h2{border-bottom:none;border-radius:8px}
+/* ------------------------------------------------------------------ steps */
+.steps{background:var(--panel);border-bottom:1px solid var(--hair);padding:10px 16px;
+  display:flex;gap:6px;overflow-x:auto;position:sticky;top:53px;z-index:55}
+.steps .st{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:99px;
+  font-size:13px;color:var(--muted);white-space:nowrap;border:1px solid transparent;
+  background:none;cursor:pointer}
+.steps .st .num{width:21px;height:21px;border-radius:50%;background:var(--hair);color:var(--muted);
+  display:grid;place-items:center;font-size:11px;font-weight:800;flex:0 0 21px}
+.steps .st.done{color:var(--ink-2)}
+.steps .st.done .num{background:var(--good);color:#fff}
+.steps .st.now{background:var(--accent);color:#fff;font-weight:700;border-color:var(--accent)}
+.steps .st.now .num{background:#fff;color:var(--accent)}
 
-.grid{display:grid;gap:10px}
-.g2{grid-template-columns:repeat(2,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-@media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
-label.f{display:block}
-label.f>span{display:block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
-  font-weight:700;color:var(--muted);margin-bottom:3px}
-input[type=text],input[type=date],input[type=number],select,textarea{
-  width:100%;border:1px solid var(--rule);border-radius:5px;padding:6px 8px;background:#fff}
-textarea{resize:vertical;min-height:56px;line-height:1.45}
-input:focus,select:focus,textarea:focus{outline:2px solid #b9cde0;outline-offset:-1px;border-color:var(--accent)}
-.hint{font-size:11.5px;color:var(--muted);line-height:1.45;margin:0 0 10px}
-.hint b{color:var(--ink-2)}
+/* ----------------------------------------------------------------- layout */
+main{max-width:900px;margin:0 auto;padding:26px 16px 130px}
+main.wide{max-width:1200px}
+.screen h1{font-size:27px;line-height:1.3;margin:0 0 8px;letter-spacing:-.02em}
+.screen .lede{color:var(--ink-2);margin:0 0 22px;font-size:15.5px}
+.screen .lede b{color:var(--ink)}
 
-/* ---- repeatable rows ---- */
-.item{border:1px solid var(--hair);border-radius:7px;padding:11px;margin-bottom:10px;background:#fcfdfe}
-.item>.ih{display:flex;align-items:center;gap:8px;margin-bottom:9px}
-.item>.ih .n{font-family:var(--mono);font-size:11px;font-weight:700;color:#fff;background:var(--ink-2);
-  border-radius:50%;width:19px;height:19px;display:grid;place-items:center;flex:0 0 19px}
-.item>.ih .t{font-weight:700;font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.addbtn{margin-top:2px}
+/* ------------------------------------------------------------------ cards */
+.pick{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:720px){.pick{grid-template-columns:1fr}}
+.pcard{background:var(--panel);border:2px solid var(--hair);border-radius:14px;padding:22px 18px;
+  text-align:left;cursor:pointer;transition:.12s}
+.pcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,30,50,.08)}
+.pcard .ic{font-size:30px;line-height:1;margin-bottom:12px}
+.pcard .t{font-size:17px;font-weight:800;margin-bottom:5px}
+.pcard .d{font-size:13.5px;color:var(--muted);line-height:1.5}
 
-/* ---- matrix grid ---- */
-.mxwrap{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:#fff}
-table.mx{border-collapse:collapse;min-width:100%}
-table.mx th,table.mx td{border:1px solid var(--hair);padding:5px;vertical-align:top}
-table.mx thead th{background:var(--tint);position:sticky;top:0}
-table.mx th.rl,table.mx td.rl{background:#f7f8fa;min-width:130px;position:sticky;left:0;z-index:2}
-table.mx thead th.rl{z-index:3}
-table.mx td{min-width:170px}
-table.mx textarea{min-height:52px;font-size:12.5px;border-color:var(--hair)}
-table.mx input{font-size:12.5px;border-color:var(--hair)}
-.colhd{display:flex;flex-direction:column;gap:4px}
-.colhd .rw{display:flex;gap:4px;align-items:center}
-select.mk{font-size:10.5px;padding:2px 4px;border-radius:4px;width:auto;flex:1}
-.mk-core{background:#fff}.mk-distinction{background:#eceef2}.mk-exception{background:#f0ece5}
-.mk-trap{background:#e7e5e9}.mk-update{background:#fff}.mk-evidence{background:#f2f4f6}
-td.c-distinction{background:#f6f7f9}td.c-exception{background:#faf7f2}td.c-trap{background:#f4f3f5}
+/* ----------------------------------------------------------------- fields */
+.fld{margin-bottom:20px}
+.fld > label{display:block;font-size:15px;font-weight:700;margin-bottom:6px}
+.fld .help{font-size:13.5px;color:var(--muted);margin:0 0 9px;line-height:1.5}
+.fld .help b{color:var(--accent);font-weight:700}
+input[type=text],input[type=date],select,textarea{width:100%;border:1.5px solid var(--rule);
+  border-radius:9px;padding:12px 13px;background:#fff}
+input.big{font-size:19px;padding:15px 16px;font-weight:600}
+textarea{resize:vertical;min-height:72px}
+input:focus,select:focus,textarea:focus{outline:3px solid #bcd6f0;outline-offset:-1px;border-color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:600px){.two{grid-template-columns:1fr}}
 
-/* ---- YAML pane ---- */
-.yamlwrap{position:fixed;inset:auto 0 0 0;background:#12161b;color:#d6dde6;z-index:60;
-  border-top:2px solid var(--accent);display:flex;flex-direction:column;max-height:70vh}
-.yamlwrap.hidden{display:none}
-.yamlwrap .yh{display:flex;align-items:center;gap:9px;padding:7px 14px;border-bottom:1px solid #2a3038;font-size:12px}
-.yamlwrap pre{margin:0;padding:12px 14px;overflow:auto;font-family:var(--mono);font-size:11.5px;line-height:1.55;white-space:pre}
+/* ------------------------------------------------------------- list rows */
+.lrow{display:flex;gap:9px;align-items:center;margin-bottom:10px}
+.lrow .idx{width:28px;height:28px;border-radius:50%;background:var(--ink-2);color:#fff;
+  display:grid;place-items:center;font-size:13px;font-weight:800;flex:0 0 28px}
+.lrow input{flex:1}
+.xb{background:#fff;border:1.5px solid var(--rule);color:#8a2b2b;border-radius:8px;
+  width:38px;height:44px;flex:0 0 38px;cursor:pointer;font-size:15px}
+.xb:hover{background:#fdf2f2;border-color:#d8b0b0}
+.addb{background:#fff;border:1.5px dashed var(--rule);border-radius:9px;padding:11px 16px;
+  cursor:pointer;color:var(--accent);font-weight:700;font-size:14.5px;width:100%}
+.addb:hover{border-color:var(--accent);background:#f7fbff}
+
+/* ------------------------------------------------------------------ chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.chip{background:#fff;border:1.5px solid var(--rule);border-radius:99px;padding:7px 14px;
+  font-size:14px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip.set{background:var(--tint);border-style:dashed}
+
+/* ------------------------------------------------------------------- grid */
+.gwrap{overflow-x:auto;border:1.5px solid var(--rule);border-radius:11px;background:#fff}
+table.g{border-collapse:separate;border-spacing:0;min-width:100%}
+table.g th,table.g td{border-right:1px solid var(--hair);border-bottom:1px solid var(--hair);
+  padding:7px;vertical-align:top}
+table.g thead th{background:var(--tint);position:sticky;top:0;z-index:2}
+table.g th.rl,table.g td.rl{position:sticky;left:0;background:#f8fafb;min-width:135px;z-index:1}
+table.g thead th.rl{z-index:3}
+table.g td{min-width:185px}
+table.g textarea{min-height:64px;font-size:14.5px;border-color:var(--hair);padding:8px}
+table.g input{font-size:14.5px;border-color:var(--hair);padding:8px}
+.mkb{margin-top:5px;background:#fff;border:1px solid var(--rule);border-radius:7px;
+  padding:3px 9px;font-size:11.5px;cursor:pointer;font-weight:700;color:var(--muted)}
+.mkb[data-m=distinction]{background:#eceef2;color:#2c3440;border-color:#a9b2bf}
+.mkb[data-m=exception]{background:#f2ede4;color:#6a5629;border-color:#c9b895}
+.mkb[data-m=trap]{background:#eae7ec;color:#4a3350;border-color:#b9a8bf}
+td.c-distinction{background:#f7f8fa}
+td.c-exception{background:#fbf8f3}
+td.c-trap{background:#f7f5f8}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:10px 0 0}
+.legend b{color:var(--ink-2)}
+
+/* ------------------------------------------------------------------- nav */
+.nav{display:flex;gap:11px;margin-top:28px;align-items:center}
+.btn{border-radius:10px;padding:14px 24px;font-size:16px;font-weight:700;cursor:pointer;
+  border:1.5px solid var(--rule);background:#fff}
+.btn:hover{background:var(--tint)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-d)}
+.btn.pri:disabled{background:#a9bdd4;border-color:#a9bdd4;cursor:not-allowed}
+.btn.lg{padding:17px 30px;font-size:17px}
+.nav .sp{flex:1}
+
+/* ------------------------------------------------------------------ done */
+.dl3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:10px}
+@media(max-width:720px){.dl3{grid-template-columns:1fr}}
+.dcard{background:var(--panel);border:2px solid var(--hair);border-radius:14px;padding:20px 18px;
+  cursor:pointer;text-align:left;transition:.12s}
+.dcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,30,50,.08)}
+.dcard.hero{border-color:var(--accent);background:#f7fbff}
+.dcard .ic{font-size:26px;margin-bottom:10px}
+.dcard .t{font-size:16px;font-weight:800;margin-bottom:4px}
+.dcard .d{font-size:13px;color:var(--muted);line-height:1.5}
+
+.tip{background:#f2f8ff;border:1px solid #cfe2f5;border-radius:11px;padding:14px 16px;
+  font-size:14px;color:#1c4570;margin:18px 0}
+.tip b{color:#123a63}
+.warnbox{background:#fdf7e8;border:1px solid #e7d5a6;border-radius:11px;padding:14px 16px;
+  font-size:14px;color:#6b551f;margin:16px 0}
+
+/* --------------------------------------------------------------- foot bar */
 .footbar{position:fixed;inset:auto 0 0 0;background:#fff;border-top:1px solid var(--rule);
-  display:flex;gap:9px;align-items:center;padding:9px 16px;z-index:55;flex-wrap:wrap}
+  display:flex;gap:10px;align-items:center;padding:11px 16px;z-index:58}
 .footbar .sp{flex:1}
-.footbar .msg{font-size:11.5px;color:var(--muted)}
-.warn{background:#fdf6e7;border:1px solid #e8d9ae;border-radius:6px;padding:8px 10px;font-size:12px;margin-bottom:10px}
-.warn ul{margin:5px 0 0;padding-left:18px}
+.footbar .msg{font-size:13px;color:var(--muted)}
+.footbar .btn{padding:11px 20px;font-size:15px}
+
+/* ----------------------------------------------------------------- modal */
+.modal{position:fixed;inset:0;background:rgba(12,16,22,.62);z-index:90;display:flex;
+  flex-direction:column;padding:18px}
+.modal.hide{display:none}
+.modal .mh{display:flex;gap:10px;align-items:center;color:#fff;margin-bottom:12px}
+.modal .mh b{font-size:16px}
+.modal .mh .sp{flex:1}
+.modal iframe{flex:1;width:100%;border:0;border-radius:10px;background:#fff}
+.modal pre{flex:1;overflow:auto;background:#12161b;color:#d6dde6;border-radius:10px;
+  padding:16px;font-family:var(--mono);font-size:12.5px;line-height:1.6;margin:0;white-space:pre}
+
+/* --------------------------------------------------------------- full mode */
+section.card{background:var(--panel);border:1px solid var(--hair);border-radius:12px;margin-bottom:14px}
+section.card>h2{margin:0;padding:14px 16px;font-size:15px;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--hair)}
+section.card>h2 .cnt{font-weight:400;color:var(--muted);font-size:12.5px}
+section.card>h2 .tw{margin-left:auto;color:var(--muted);font-size:13px}
+section.card>.body{padding:16px}
+section.card.closed>.body{display:none}
+section.card.closed>h2{border-bottom:none}
+.item{border:1px solid var(--hair);border-radius:10px;padding:13px;margin-bottom:11px;background:#fcfdfe}
+.item .ih{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.item .ih .n{font-size:12px;font-weight:800;color:#fff;background:var(--ink-2);border-radius:50%;
+  width:22px;height:22px;display:grid;place-items:center;flex:0 0 22px}
+.item .ih .t{font-weight:700;font-size:14.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sm{padding:5px 11px;font-size:12.5px;border-radius:7px;border:1px solid var(--rule);background:#fff;cursor:pointer}
+.sm.dg{color:#8a2b2b}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+@media(max-width:720px){.g3{grid-template-columns:1fr}}
+label.f{display:block}
+label.f>span{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:4px}
+label.f input,label.f select,label.f textarea{padding:9px 11px;font-size:14.5px}
+h3.sh{font-size:14px;margin:20px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--hair)}
 </style>
 </head>
 <body>
 
 <header class="bar">
-  <h1>Exam Matrix</h1>
-  <span class="st" id="subtitle"></span>
+  <span class="logo">시험표 만들기</span>
   <span class="sp"></span>
-  <button class="gh" id="btnLang">EN</button>
-  <button class="gh" id="btnLoad" data-i="load">불러오기</button>
+  <button class="tb on" id="mEasy">쉬운 모드</button>
+  <button class="tb" id="mFull">전체 모드</button>
+  <button class="tb" id="btnLoad">불러오기</button>
   <input type="file" id="fileIn" accept=".yaml,.yml" hidden>
-  <button class="gh" id="btnSample" data-i="sample">예시 채우기</button>
-  <button class="gh" id="btnClear" data-i="clear">비우기</button>
 </header>
 
+<div class="steps" id="steps"></div>
 <main id="app"></main>
 
 <div class="footbar">
-  <button class="pri" id="btnDl" data-i="download">YAML 내려받기</button>
-  <button id="btnCopy" data-i="copy">복사</button>
-  <button id="btnYaml" data-i="showyaml">YAML 보기</button>
+  <button class="btn pri" id="btnPdf">📄 시험표 만들기</button>
+  <button class="btn" id="btnPrev">미리보기</button>
   <span class="sp"></span>
   <span class="msg" id="msg"></span>
+  <button class="sm" id="btnYaml">파일로 저장</button>
 </div>
 
-<div class="yamlwrap hidden" id="yamlPane">
-  <div class="yh"><b>exam.yaml</b><span class="sp" style="flex:1"></span>
-    <button class="sm" id="btnYamlClose">닫기</button></div>
-  <pre id="yamlOut"></pre>
+<div class="modal hide" id="modal">
+  <div class="mh"><b id="modalTitle"></b><span class="sp"></span>
+    <button class="tb" id="modalPrint">인쇄 · PDF 저장</button>
+    <button class="tb" id="modalClose">닫기</button></div>
+  <iframe id="modalFrame" title="미리보기"></iframe>
+  <pre id="modalPre" style="display:none"></pre>
 </div>
 
 <script>/*JSYAML*/</script>
+<script>/*RENDERER*/</script>
 <script>
 "use strict";
 /* =========================================================================
-   Exam Matrix editor — types the content, emits the YAML the build reads.
-   Single file, no network, no build step. Works from file://.
+   시험표 만들기 — 브라우저 하나로 입력부터 PDF까지.
+   Node, 터미널, 설치 없음. file:// 에서도 동작.
    ========================================================================= */
 
-const MARKS = ["core","distinction","exception","trap","update","evidence"];
+/* 화면에 보이는 표시는 4가지로 줄였다. 데이터는 6가지를 그대로 유지하되
+   (update/evidence 는 전체 모드에서만), 처음 쓰는 사람이 고를 것은 4개면 충분하다. */
+const MARK_CYCLE = ["core", "distinction", "exception", "trap"];
+const MARK_KO = {
+  core: "기본", distinction: "갈림", exception: "예외",
+  trap: "함정", update: "개정", evidence: "근거",
+};
+const MARK_HELP = {
+  core: "그냥 사실", distinction: "여기서 갈린다", exception: "원칙이 안 통하는 곳",
+  trap: "시험이 함정을 파는 곳", update: "바뀔 수 있음", evidence: "기출 표현",
+};
+const ALL_MARKS = ["core", "distinction", "exception", "trap", "update", "evidence"];
 
-const ARCH = {
-  concept:     {ko:"개념 · 이론",   en:"Concept / Theory",   row:{ko:"개념",en:"Concept"},
-    cols:[["definition","한 줄 정의","One-line definition","core"],["criterion","판단 기준","Defining criterion","distinction"],
-          ["characteristics","주요 특징","Key characteristics","core"],["decisive","결정적 차이","Decisive distinction","distinction"],
-          ["exception","예외","Exception","exception"],["trap","빈출 함정","Common trap","trap"]]},
-  law:         {ko:"법령 · 규정",   en:"Law / Regulation",   row:{ko:"제도 · 법리",en:"Rule / doctrine"},
-    cols:[["basis","법적 근거","Legal basis","evidence"],["subject","주체","Subject","core"],
-          ["requirements","요건","Requirements","distinction"],["effect","효과","Effect","core"],
-          ["period","기간 · 기한","Deadline / period","trap"],["exception","예외","Exception","exception"]]},
-  calculation: {ko:"계산 · 공학",   en:"Calculation",        row:{ko:"공식 · 기법",en:"Formula / method"},
-    cols:[["meaning","의미","What it gives you","core"],["variables","변수 · 단위","Variables & units","trap"],
-          ["prerequisites","적용 전제","Prerequisites","distinction"],["when","사용 시점","When to use","distinction"],
-          ["mistake","빈출 실수","Common mistake","trap"],["similar","유사 공식","Similar formula","exception"]]},
-  it:          {ko:"IT · 정보처리", en:"IT certification",   row:{ko:"기술 · 명령어",en:"Technology"},
-    cols:[["purpose","용도","Purpose","core"],["mechanism","동작 · 문법","Mechanism","distinction"],
-          ["prerequisite","전제 조건","Prerequisite","core"],["result","결과","Result","core"],
-          ["limitation","한계","Limitation","exception"],["trap","시험 함정","Exam trap","trap"]]},
-  language:    {ko:"어학",          en:"Language",           row:{ko:"표현",en:"Expression"},
-    cols:[["meaning","의미","Meaning","core"],["function","문법 · 기능","Grammar / function","core"],
-          ["register","격식 · 어감","Register","distinction"],["collocation","연어","Collocation","core"],
-          ["contrast","대조 표현","Contrast with","distinction"],["error","빈출 오류","Common error","trap"]]},
-  procedure:   {ko:"실기 · 절차",   en:"Procedure",          row:{ko:"작업",en:"Task"},
-    cols:[["trigger","착수 조건","Trigger","core"],["steps","단계 순서","Step sequence","distinction"],
-          ["checkpoint","확인 지점","Checkpoint","core"],["error_condition","오류 상황","Error condition","exception"],
-          ["recovery","복구 조치","Recovery","exception"],["examiner_trap","감독관 함정","Examiner trap","trap"]]},
+/* 시험 종류별 추천 비교 기준. src/lib/archetypes.js 와 같은 내용을 쉬운 말로. */
+const PRESETS = [
+  { id: "concept", name: "개념 · 이론", eg: "사회, 윤리, 경영학",
+    cols: ["뜻", "핵심 특징", "갈리는 점", "예외", "함정"] },
+  { id: "law", name: "법 · 규정", eg: "행정법, 공무원 시험",
+    cols: ["근거 조문", "요건", "효과", "기간", "예외"] },
+  { id: "calculation", name: "계산 · 공식", eg: "수학, 물리, 재무",
+    cols: ["무엇을 구하나", "변수 · 단위", "쓰는 상황", "자주 하는 실수", "비슷한 공식"] },
+  { id: "it", name: "IT · 컴퓨터", eg: "정보처리기사, 네트워크",
+    cols: ["용도", "동작 방식", "결과", "한계", "시험 함정"] },
+  { id: "language", name: "어학 · 단어", eg: "영어, 한자, 문법",
+    cols: ["뜻", "쓰임", "어감", "비슷한 말", "자주 틀리는 것"] },
+  { id: "procedure", name: "절차 · 실기", eg: "실기시험, 실습",
+    cols: ["언제 하나", "순서", "확인할 것", "실패 상황", "감독관 함정"] },
+];
+
+const QUICK_COLS = ["뜻", "특징", "차이점", "예외", "함정", "예시", "조건", "순서", "장점", "단점"];
+
+const ETYPES = ["knowledge-gap", "confused-pair", "exception-forgotten", "wording-misread",
+  "formula-selection", "calculation", "procedure-order", "outdated", "careless", "time-pressure"];
+const ETYPE_KO = {
+  "knowledge-gap": "아예 몰랐음", "confused-pair": "둘을 헷갈림",
+  "exception-forgotten": "예외를 까먹음", "wording-misread": "문제를 잘못 읽음",
+  "formula-selection": "공식을 잘못 고름", "calculation": "계산 실수",
+  "procedure-order": "순서를 틀림", "outdated": "옛날 내용으로 앎",
+  "careless": "실수", "time-pressure": "시간 부족",
 };
 
-const ETYPES = ["knowledge-gap","confused-pair","exception-forgotten","wording-misread",
-  "formula-selection","calculation","procedure-order","outdated","careless","time-pressure"];
-
-const I18N = {
-  ko:{
-    load:"불러오기", sample:"예시 채우기", clear:"비우기", download:"YAML 내려받기",
-    copy:"복사", showyaml:"YAML 보기", hideyaml:"YAML 숨기기", close:"닫기",
-    s_exam:"시험 정보", s_blueprint:"출제 설계도", s_topics:"주제", s_errors:"오답 기록", s_compress:"압축 사다리",
-    name:"시험명", name_sub:"부제 (선택)", lang:"문서 언어", authority:"시행 기관", date:"시험일",
-    passing:"합격 기준", version:"출제기준 · 버전", target:"목표 점수", confidence:"현재 자신감 (1–5)",
-    updated:"최종 수정", subjects:"과목 (줄바꿈으로 구분)", sources:"학습 자료 (줄바꿈으로 구분)",
-    what_tests:"이 시험은 실제로 무엇을 묻는가? (줄바꿈으로 구분)",
-    domain:"영역", weight:"비중", qtype:"문항 유형", priority:"우선순위", last_review:"최근 복습",
-    high_yield:"빈출 주제", weak:"취약 주제", volatile:"개정 민감 주제",
-    add_domain:"영역 추가", add_topic:"주제 추가", add_row:"행 추가", add_col:"열 추가",
-    add_pair:"혼동 쌍 추가", add_trap:"함정 추가", add_ev:"근거 추가", add_err:"오답 추가",
-    add_l2:"L2 항목 추가", del:"삭제",
-    title:"주제 제목", id:"ID (영문·숫자·하이픈)", archetype:"유형", importance:"중요도",
-    frequency:"출제 빈도", why:"왜 중요한가", core_q:"핵심 질문", key_axis:"핵심 비교축",
-    prereq:"선행 개념 (쉼표 구분)", tsources:"근거 (쉼표 구분)", tupdated:"최종 수정",
-    one_sentence:"한 문장 모델", essentials:"핵심 사실 (최대 5개)",
-    matrix:"엑셀표 매트릭스", row_label:"행 머리말", mnote:"메모 (선택)",
-    decisive:"결정적 변별", decisive_a:"단 하나의 기준으로 구분한다면?",
-    pairs:"혼동 쌍", p_a:"A", p_b:"B", p_why:"왜 혼동되는가", p_clue:"결정적 단서",
-    traps:"예외 · 함정", t_cue:"진술 · 신호어", t_usually:"대체로", t_exc:"예외", t_why:"왜 속는가", t_src:"근거",
-    evidence:"기출 · 근거", e_row:"행", e_col:"열", e_src:"출처", e_exam:"시험 · 연도",
-    e_q:"문항", e_as:"기출 표현", e_risk:"오답 위험",
-    l_date:"날짜", l_q:"문항", l_topic:"주제", l_mine:"내 답", l_correct:"정답",
-    l_type:"오류 유형", l_missing:"놓친 변별점", l_update:"매트릭스 셀", l_retest:"재시험",
-    l2:"L2 — 시험 당일", l3:"L3 — 마지막 10분 (줄바꿈으로 구분)", l2item:"항목", l2detail:"결정적 단서",
-    saved:"자동 저장됨", copied:"복사했습니다", loaded:"불러왔습니다",
-    confirm_clear:"모든 입력을 지웁니다. 계속할까요?",
-    hint_matrix:"열은 <b>이 주제에서 시험이 실제로 가르는 축</b>이어야 합니다. 기본 열은 출발점일 뿐이니 바꾸세요.",
-    hint_err:"모든 개념 오류는 무효가 된 <b>매트릭스 셀</b>을 지목해야 합니다.",
-    hint_ess:"최대 다섯 개. 여섯 번째가 필요하다면 그중 하나는 핵심이 아니었습니다.",
-    none:"—", required:"필수 항목이 비어 있습니다",
-  },
-  en:{
-    load:"Load", sample:"Fill with sample", clear:"Clear", download:"Download YAML",
-    copy:"Copy", showyaml:"Show YAML", hideyaml:"Hide YAML", close:"Close",
-    s_exam:"Exam", s_blueprint:"Blueprint", s_topics:"Topics", s_errors:"Error log", s_compress:"Compression",
-    name:"Exam name", name_sub:"Subtitle (optional)", lang:"Document language", authority:"Awarding body", date:"Exam date",
-    passing:"Passing criterion", version:"Syllabus / version", target:"Target score", confidence:"Confidence (1–5)",
-    updated:"Last updated", subjects:"Subjects (one per line)", sources:"Sources (one per line)",
-    what_tests:"What does this exam actually test? (one per line)",
-    domain:"Domain", weight:"Weight", qtype:"Question type", priority:"Priority", last_review:"Last review",
-    high_yield:"High-yield topics", weak:"Weak topics", volatile:"Volatile topics",
-    add_domain:"Add domain", add_topic:"Add topic", add_row:"Add row", add_col:"Add column",
-    add_pair:"Add pair", add_trap:"Add trap", add_ev:"Add evidence", add_err:"Add error",
-    add_l2:"Add L2 item", del:"Delete",
-    title:"Topic title", id:"ID (a-z, 0-9, hyphen)", archetype:"Archetype", importance:"Importance",
-    frequency:"Frequency", why:"Why it matters", core_q:"Core question", key_axis:"Key comparison axis",
-    prereq:"Prerequisites (comma separated)", tsources:"Sources (comma separated)", tupdated:"Updated",
-    one_sentence:"One-sentence model", essentials:"Essential facts (max 5)",
-    matrix:"Exam Matrix", row_label:"Row header", mnote:"Note (optional)",
-    decisive:"Decisive distinction", decisive_a:"If you had ONE criterion, what would it be?",
-    pairs:"Confusion pairs", p_a:"A", p_b:"B", p_why:"Why confused", p_clue:"Decisive clue",
-    traps:"Exceptions & traps", t_cue:"Statement / cue", t_usually:"Usually", t_exc:"Exception", t_why:"Why it tricks", t_src:"Source",
-    evidence:"Question & evidence", e_row:"Row", e_col:"Column", e_src:"Source", e_exam:"Exam / year",
-    e_q:"Question", e_as:"Tested as", e_risk:"Error risk",
-    l_date:"Date", l_q:"Question", l_topic:"Topic", l_mine:"My answer", l_correct:"Correct",
-    l_type:"Error type", l_missing:"Missing distinction", l_update:"Matrix cell", l_retest:"Retest",
-    l2:"L2 — exam day", l3:"L3 — last 10 minutes (one per line)", l2item:"Item", l2detail:"Decisive clue",
-    saved:"Autosaved", copied:"Copied", loaded:"Loaded",
-    confirm_clear:"This clears everything. Continue?",
-    hint_matrix:"Columns must be <b>the axes this exam actually separates on</b>. The defaults are a starting point — replace them.",
-    hint_err:"Every conceptual mistake must name the <b>matrix cell</b> it invalidates.",
-    hint_ess:"Five maximum. If you want a sixth, one of these was not essential.",
-    none:"—", required:"A required field is empty",
-  },
-};
-
-let UI = localStorage.getItem("em.ui") || "ko";
-const t = (k) => I18N[UI][k] ?? k;
+const STEPS = ["시작", "시험", "헷갈리는 것", "비교 기준", "표 채우기", "완성"];
 
 /* ------------------------------------------------------------------ state */
 
-const blankTopic = (arch = "concept") => {
-  const a = ARCH[arch];
-  return {
-    id:"", title:"", archetype:arch, importance:"A", frequency:"", why:"",
-    core_question:"", key_axis:"", prerequisites:"", sources:"", updated:"",
-    one_sentence:"", essentials:["","","","",""],
-    matrix:{ row_label:"", note:"",
-      columns:a.cols.slice(0,5).map(([k,ko,en,mk])=>({key:k,label_ko:ko,label:en,mark:mk})),
-      rows:[{label:"",sub:"",cells:{}},{label:"",sub:"",cells:{}}] },
-    decisive:{ answer:"", pairs:[] },
-    traps:[], evidence:[],
-  };
-};
+const blankTopic = () => ({
+  id: "", title: "", archetype: "concept", importance: "A", frequency: "", why: "",
+  core_question: "", key_axis: "", prerequisites: "", sources: "", updated: "",
+  one_sentence: "", essentials: ["", "", "", "", ""],
+  matrix: { row_label: "", note: "", columns: [], rows: [] },
+  decisive: { answer: "", pairs: [] },
+  traps: [], evidence: [],
+});
 
 const blankState = () => ({
-  exam:{ name:"", name_sub:"", lang:"ko", authority:"", date:"", passing:"",
-    syllabus_version:"", target_score:"", confidence:"", last_updated:"",
-    subjects:"", sources:"", what_it_tests:"",
-    blueprint:[], high_yield:"", weak:"", volatile:"" },
-  topics:[ blankTopic("concept") ],
-  error_log:[],
-  compression:{ l2:[], l3:"" },
-  open:{},
+  exam: {
+    name: "", name_sub: "", lang: "ko", authority: "", date: "", passing: "",
+    syllabus_version: "", target_score: "", confidence: "", last_updated: "",
+    subjects: "", sources: "", what_it_tests: "",
+    blueprint: [], high_yield: "", weak: "", volatile: "",
+  },
+  topics: [],
+  error_log: [],
+  compression: { l2: [], l3: "" },
+  ui: { step: 0, mode: "easy", topic: 0 },
+  open: {},
 });
 
 let S = load() || blankState();
+if (!S.ui) S.ui = { step: 0, mode: "easy", topic: 0 };
+if (!S.topics) S.topics = [];
 
-function load(){
-  try{ const r = localStorage.getItem("em.state"); return r ? JSON.parse(r) : null; }
-  catch(e){ return null; }
+function load() {
+  try { const r = localStorage.getItem("em.v2"); return r ? JSON.parse(r) : null; }
+  catch (e) { return null; }
 }
 let saveTimer;
-function save(){
+function save() {
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(()=>{
-    try{ localStorage.setItem("em.state", JSON.stringify(S)); flash(t("saved")); }catch(e){}
-  }, 400);
+  saveTimer = setTimeout(() => {
+    try { localStorage.setItem("em.v2", JSON.stringify(S)); flash("자동 저장됨"); } catch (e) {}
+  }, 350);
 }
-function flash(m){ const el=document.getElementById("msg"); el.textContent=m;
-  clearTimeout(flash._t); flash._t=setTimeout(()=>el.textContent="",1800); }
+function flash(m) {
+  const el = document.getElementById("msg");
+  el.textContent = m;
+  clearTimeout(flash._t);
+  flash._t = setTimeout(() => (el.textContent = ""), 1800);
+}
 
-/* -------------------------------------------------------------- utilities */
+const esc = (s) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const slug = (s) => String(s || "").toLowerCase().normalize("NFKD")
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
+const splitLines = (s) => String(s || "").split("\n").map((x) => x.trim()).filter(Boolean);
+const splitCommas = (s) => String(s || "").split(",").map((x) => x.trim()).filter(Boolean);
+const cur = () => S.topics[S.ui.topic] || S.topics[0];
 
-const esc = (s)=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-const slug = (s)=>String(s||"").toLowerCase().normalize("NFKD")
-  .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);
-const splitLines = (s)=>String(s||"").split("\n").map(x=>x.trim()).filter(Boolean);
-const splitCommas = (s)=>String(s||"").split(",").map(x=>x.trim()).filter(Boolean);
+/* --------------------------------------------------------------- YAML out */
 
-/* ------------------------------------------------------------ YAML output */
-
-function needsQuote(s){
-  if(s==="") return true;
-  if(/^[\s]|[\s]$/.test(s)) return true;
-  if(/^[-?:,\[\]{}#&*!|>'"%@`]/.test(s)) return true;
-  if(/:\s/.test(s) || /\s#/.test(s)) return true;
-  if(/^(true|false|null|yes|no|on|off|~)$/i.test(s)) return true;
-  if(/^[-+]?[0-9.]+([eE][-+]?\d+)?$/.test(s)) return true;
+function needsQuote(s) {
+  if (s === "") return true;
+  if (/^[\s]|[\s]$/.test(s)) return true;
+  if (/^[-?:,\[\]{}#&*!|>'"%@`]/.test(s)) return true;
+  if (/:\s/.test(s) || /\s#/.test(s)) return true;
+  if (/^(true|false|null|yes|no|on|off|~)$/i.test(s)) return true;
+  if (/^[-+]?[0-9.]+([eE][-+]?\d+)?$/.test(s)) return true;
   return false;
 }
-function sc(v){
+function sc(v) {
   const s = String(v ?? "");
-  if(!needsQuote(s)) return s;
-  return '"' + s.replace(/\\/g,"\\\\").replace(/"/g,'\\"') + '"';
+  if (!needsQuote(s)) return s;
+  return '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
 }
-/** Long prose becomes a folded block scalar, which is how the examples read. */
-function scalar(v, indent){
+function scalar(v, indent) {
   const s = String(v ?? "");
-  if(s.length <= 78 && !s.includes("\n")) return sc(s);
+  if (s.length <= 78 && !s.includes("\n")) return sc(s);
   const pad = " ".repeat(indent);
-  const words = s.replace(/\s+/g," ").trim().split(" ");
-  const out=[]; let line="";
-  for(const w of words){
-    if((line+" "+w).trim().length > 74){ out.push(line.trim()); line=w; }
+  const words = s.replace(/\s+/g, " ").trim().split(" ");
+  const out = []; let line = "";
+  for (const w of words) {
+    if ((line + " " + w).trim().length > 74) { out.push(line.trim()); line = w; }
     else line += " " + w;
   }
-  if(line.trim()) out.push(line.trim());
-  return ">-\n" + out.map(l=>pad+l).join("\n");
+  if (line.trim()) out.push(line.trim());
+  return ">-\n" + out.map((l) => pad + l).join("\n");
 }
-const listOf = (arr, indent)=> arr.length
-  ? "\n" + arr.map(x=>" ".repeat(indent)+"- "+sc(x)).join("\n")
-  : " []";
+const listOf = (arr, indent) => arr.length
+  ? "\n" + arr.map((x) => " ".repeat(indent) + "- " + sc(x)).join("\n") : " []";
 
-function buildYaml(){
-  const e = S.exam, L=[];
+function buildYaml() {
+  const e = S.exam, L = [];
   const lang = e.lang === "en" ? "en" : "ko";
-  const lbl = (c)=> lang==="ko" ? (c.label_ko||c.label||c.key) : (c.label||c.label_ko||c.key);
-
-  L.push("# " + (e.name || "Exam Matrix"));
-  L.push("# Exam Matrix — generated by tools/editor.html");
+  L.push("# " + (e.name || "시험표"));
+  L.push("# tools/editor.html 에서 생성됨");
   L.push("");
   L.push("exam:");
-  L.push("  name: " + sc(e.name));
-  if(e.name_sub) L.push("  name_sub: " + sc(e.name_sub));
+  L.push("  name: " + sc(e.name || "제목 없는 시험"));
+  if (e.name_sub) L.push("  name_sub: " + sc(e.name_sub));
   L.push("  lang: " + lang);
-  if(e.authority) L.push("  authority: " + sc(e.authority));
-  if(e.date) L.push("  date: " + sc(e.date));
-  if(e.syllabus_version) L.push("  syllabus_version: " + sc(e.syllabus_version));
-  if(e.passing) L.push("  passing: " + sc(e.passing));
-  if(e.target_score!=="" ) L.push("  target_score: " + sc(e.target_score));
-  if(e.confidence) L.push("  confidence: " + Number(e.confidence));
-  if(e.last_updated) L.push("  last_updated: " + sc(e.last_updated));
+  if (e.authority) L.push("  authority: " + sc(e.authority));
+  if (e.date) L.push("  date: " + sc(e.date));
+  if (e.syllabus_version) L.push("  syllabus_version: " + sc(e.syllabus_version));
+  if (e.passing) L.push("  passing: " + sc(e.passing));
+  if (e.target_score !== "") L.push("  target_score: " + sc(e.target_score));
+  if (e.confidence) L.push("  confidence: " + Number(e.confidence));
+  if (e.last_updated) L.push("  last_updated: " + sc(e.last_updated));
   L.push("  subjects:" + listOf(splitLines(e.subjects), 4));
   L.push("  sources:" + listOf(splitLines(e.sources), 4));
   const wt = splitLines(e.what_it_tests);
-  if(wt.length){ L.push("  what_it_tests:" + listOf(wt, 4)); }
-  if(e.blueprint.length){
+  if (wt.length) L.push("  what_it_tests:" + listOf(wt, 4));
+  if (e.blueprint.length) {
     L.push("  blueprint:");
-    for(const b of e.blueprint){
-      L.push("    - domain: " + sc(b.domain));
-      if(b.weight!=="") L.push("      weight: " + (isNaN(Number(b.weight))?sc(b.weight):Number(b.weight)));
-      if(b.question_type) L.push("      question_type: " + sc(b.question_type));
-      if(b.priority) L.push("      priority: " + b.priority);
-      if(b.confidence) L.push("      confidence: " + Number(b.confidence));
-      if(b.last_review) L.push("      last_review: " + sc(b.last_review));
+    for (const b of e.blueprint) {
+      L.push("    - domain: " + sc(b.domain || "영역"));
+      if (b.weight !== "") L.push("      weight: " + (isNaN(Number(b.weight)) ? sc(b.weight) : Number(b.weight)));
+      if (b.question_type) L.push("      question_type: " + sc(b.question_type));
+      if (b.priority) L.push("      priority: " + b.priority);
+      if (b.confidence) L.push("      confidence: " + Number(b.confidence));
+      if (b.last_review) L.push("      last_review: " + sc(b.last_review));
     }
   }
   L.push("  high_yield:" + listOf(splitLines(e.high_yield), 4));
@@ -364,50 +390,51 @@ function buildYaml(){
   L.push("");
   L.push("topics:");
 
-  S.topics.forEach((tp, ti)=>{
-    const id = tp.id || slug(tp.title) || ("topic-"+(ti+1));
+  S.topics.forEach((tp, ti) => {
+    const id = tp.id || slug(tp.title) || ("topic-" + (ti + 1));
     L.push("  - id: " + id);
-    L.push("    title: " + sc(tp.title));
+    L.push("    title: " + sc(tp.title || ("주제 " + (ti + 1))));
     L.push("    archetype: " + tp.archetype);
-    if(tp.importance) L.push("    importance: " + tp.importance);
-    if(tp.frequency) L.push("    frequency: " + sc(tp.frequency));
-    if(tp.why) L.push("    why: " + scalar(tp.why, 6));
-    if(tp.core_question) L.push("    core_question: " + sc(tp.core_question));
-    if(tp.key_axis) L.push("    key_axis: " + sc(tp.key_axis));
+    if (tp.importance) L.push("    importance: " + tp.importance);
+    if (tp.frequency) L.push("    frequency: " + sc(tp.frequency));
+    if (tp.why) L.push("    why: " + scalar(tp.why, 6));
+    if (tp.core_question) L.push("    core_question: " + sc(tp.core_question));
+    if (tp.key_axis) L.push("    key_axis: " + sc(tp.key_axis));
     const pre = splitCommas(tp.prerequisites);
-    if(pre.length) L.push("    prerequisites: [" + pre.map(sc).join(", ") + "]");
+    if (pre.length) L.push("    prerequisites: [" + pre.map(sc).join(", ") + "]");
     const src = splitCommas(tp.sources);
-    if(src.length) L.push("    sources: [" + src.map(sc).join(", ") + "]");
-    if(tp.updated) L.push("    updated: " + sc(tp.updated));
-    if(tp.one_sentence) L.push("    one_sentence: " + scalar(tp.one_sentence, 6));
-    const ess = tp.essentials.map(x=>String(x||"").trim()).filter(Boolean).slice(0,5);
-    if(ess.length) L.push("    essentials:" + listOf(ess, 6));
+    if (src.length) L.push("    sources: [" + src.map(sc).join(", ") + "]");
+    if (tp.updated) L.push("    updated: " + sc(tp.updated));
+    if (tp.one_sentence) L.push("    one_sentence: " + scalar(tp.one_sentence, 6));
+    const ess = tp.essentials.map((x) => String(x || "").trim()).filter(Boolean).slice(0, 5);
+    if (ess.length) L.push("    essentials:" + listOf(ess, 6));
 
     L.push("");
     L.push("    matrix:");
-    if(tp.matrix.row_label) L.push("      row_label: " + sc(tp.matrix.row_label));
-    if(tp.matrix.note) L.push("      note: " + sc(tp.matrix.note));
+    if (tp.matrix.row_label) L.push("      row_label: " + sc(tp.matrix.row_label));
+    if (tp.matrix.note) L.push("      note: " + sc(tp.matrix.note));
     L.push("      columns:");
-    tp.matrix.columns.forEach(c=>{
-      const parts = ["key: "+c.key];
-      if(c.label) parts.push("label: "+sc(c.label));
-      if(c.label_ko) parts.push("label_ko: "+sc(c.label_ko));
-      parts.push("mark: "+(c.mark||"core"));
+    tp.matrix.columns.forEach((c, ci) => {
+      const label = c.label_ko || c.label || ("기준 " + (ci + 1));
+      const parts = ["key: " + c.key];
+      if (lang === "ko") { parts.push("label_ko: " + sc(label)); if (c.label) parts.push("label: " + sc(c.label)); }
+      else { parts.push("label: " + sc(c.label || label)); }
+      parts.push("mark: " + (c.mark || "core"));
       L.push("        - { " + parts.join(", ") + " }");
     });
     L.push("      rows:");
-    tp.matrix.rows.forEach(r=>{
-      L.push("        - label: " + sc(r.label));
-      if(r.sub) L.push("          sub: " + sc(r.sub));
-      const keys = tp.matrix.columns.filter(c=>{
-        const cell = r.cells[c.key]; return cell && String(cell.v||"").trim();
+    tp.matrix.rows.forEach((r, ri) => {
+      L.push("        - label: " + sc(r.label || ("항목 " + (ri + 1))));
+      if (r.sub) L.push("          sub: " + sc(r.sub));
+      const filled = tp.matrix.columns.filter((c) => {
+        const cell = r.cells[c.key]; return cell && String(cell.v || "").trim();
       });
-      if(keys.length){
+      if (filled.length) {
         L.push("          cells:");
-        keys.forEach(c=>{
+        filled.forEach((c) => {
           const cell = r.cells[c.key];
           const v = String(cell.v).trim();
-          if(cell.mark && cell.mark !== c.mark){
+          if (cell.mark && cell.mark !== c.mark) {
             L.push("            " + c.key + ": { v: " + sc(v) + ", mark: " + cell.mark + " }");
           } else {
             L.push("            " + c.key + ": " + sc(v));
@@ -417,72 +444,73 @@ function buildYaml(){
     });
 
     const d = tp.decisive;
-    if(d.answer || d.pairs.length){
+    if (d.answer || d.pairs.length) {
       L.push("");
       L.push("    decisive:");
-      if(d.answer) L.push("      answer: " + scalar(d.answer, 8));
-      if(d.pairs.length){
+      if (d.answer) L.push("      answer: " + scalar(d.answer, 8));
+      if (d.pairs.length) {
         L.push("      pairs:");
-        d.pairs.forEach(p=>{
-          L.push("        - a: " + sc(p.a));
-          L.push("          b: " + sc(p.b));
-          if(p.why) L.push("          why: " + sc(p.why));
-          if(p.clue) L.push("          clue: " + sc(p.clue));
+        d.pairs.forEach((p) => {
+          L.push("        - a: " + sc(p.a || "A"));
+          L.push("          b: " + sc(p.b || "B"));
+          if (p.why) L.push("          why: " + sc(p.why));
+          if (p.clue) L.push("          clue: " + sc(p.clue));
         });
       }
     }
-    if(tp.traps.length){
+    if (tp.traps.length) {
       L.push("");
       L.push("    traps:");
-      tp.traps.forEach(x=>{
-        L.push("      - cue: " + sc(x.cue));
-        if(x.usually) L.push("        usually: " + sc(x.usually));
-        if(x.exception) L.push("        exception: " + sc(x.exception));
-        if(x.why) L.push("        why: " + sc(x.why));
-        if(x.source) L.push("        source: " + sc(x.source));
+      tp.traps.forEach((x) => {
+        L.push("      - cue: " + sc(x.cue || "진술"));
+        if (x.usually) L.push("        usually: " + sc(x.usually));
+        if (x.exception) L.push("        exception: " + sc(x.exception));
+        if (x.why) L.push("        why: " + sc(x.why));
+        if (x.source) L.push("        source: " + sc(x.source));
       });
     }
-    if(tp.evidence.length){
+    if (tp.evidence.length) {
       L.push("");
       L.push("    evidence:");
-      tp.evidence.forEach(x=>{
-        L.push("      - cell: { row: " + sc(x.row) + ", column: " + (x.column||"") + " }");
-        if(x.source) L.push("        source: " + sc(x.source));
-        if(x.exam) L.push("        exam: " + sc(x.exam));
-        if(x.question) L.push("        question: " + sc(x.question));
-        if(x.tested_as) L.push("        tested_as: " + sc(x.tested_as));
-        if(x.risk) L.push("        risk: " + x.risk);
+      tp.evidence.forEach((x) => {
+        if (x.row && x.column) L.push("      - cell: { row: " + sc(x.row) + ", column: " + x.column + " }");
+        else L.push("      - source: " + sc(x.source || ""));
+        if (x.row && x.column && x.source) L.push("        source: " + sc(x.source));
+        if (x.exam) L.push("        exam: " + sc(x.exam));
+        if (x.question) L.push("        question: " + sc(x.question));
+        if (x.tested_as) L.push("        tested_as: " + sc(x.tested_as));
+        if (x.risk) L.push("        risk: " + x.risk);
       });
     }
     L.push("");
   });
 
-  if(S.error_log.length){
+  if (S.error_log.length) {
     L.push("error_log:");
-    S.error_log.forEach(x=>{
-      L.push("  - date: " + sc(x.date));
-      if(x.question) L.push("    question: " + sc(x.question));
-      if(x.topic) L.push("    topic: " + sc(x.topic));
-      if(x.mine) L.push("    mine: " + sc(x.mine));
-      if(x.correct) L.push("    correct: " + sc(x.correct));
-      if(x.error_type) L.push("    error_type: " + x.error_type);
-      if(x.missing_distinction) L.push("    missing_distinction: " + sc(x.missing_distinction));
-      if(x.mt && x.mrow && x.mcol)
+    S.error_log.forEach((x) => {
+      L.push("  - date: " + sc(x.date || ""));
+      if (x.question) L.push("    question: " + sc(x.question));
+      if (x.topic) L.push("    topic: " + sc(x.topic));
+      if (x.mine) L.push("    mine: " + sc(x.mine));
+      if (x.correct) L.push("    correct: " + sc(x.correct));
+      if (x.error_type) L.push("    error_type: " + x.error_type);
+      if (x.missing_distinction) L.push("    missing_distinction: " + sc(x.missing_distinction));
+      if (x.mt && x.mrow && x.mcol)
         L.push("    matrix_update: { topic: " + x.mt + ", row: " + sc(x.mrow) + ", column: " + x.mcol + " }");
-      if(x.retest) L.push("    retest: " + sc(x.retest));
+      if (x.retest) L.push("    retest: " + sc(x.retest));
     });
     L.push("");
   }
 
   const l3 = splitLines(S.compression.l3);
-  if(S.compression.l2.length || l3.length){
+  if (S.compression.l2.length || l3.length) {
     L.push("compression:");
-    if(S.compression.l2.length){
+    if (S.compression.l2.length) {
       L.push("  l2:");
-      S.compression.l2.forEach(x=>{
-        L.push("    - item: " + sc(x.item));
-        if(x.detail) L.push("      detail: " + sc(x.detail));
-        if(x.mark) L.push("      mark: " + x.mark);
+      S.compression.l2.forEach((x) => {
+        L.push("    - item: " + sc(x.item || "항목"));
+        if (x.detail) L.push("      detail: " + sc(x.detail));
+        if (x.mark) L.push("      mark: " + x.mark);
       });
     } else L.push("  l2: []");
     L.push("  l3:" + listOf(l3, 4));
@@ -493,511 +521,749 @@ function buildYaml(){
   return L.join("\n") + "\n";
 }
 
-/* ------------------------------------------------------------ YAML import */
+/* ---------------------------------------------------------------- YAML in */
 
-function importYaml(text){
+function importYaml(text) {
   const d = jsyaml.load(text);
-  if(!d || !d.exam) throw new Error("exam: block not found");
+  if (!d || !d.exam) throw new Error("exam: 항목을 찾을 수 없습니다");
   const e = d.exam;
   const st = blankState();
   st.exam = {
-    name:e.name||"", name_sub:e.name_sub||"", lang:e.lang==="en"?"en":"ko",
-    authority:e.authority||"", date:e.date||"", passing:e.passing||"",
-    syllabus_version:e.syllabus_version||"", target_score:e.target_score??"",
-    confidence:e.confidence||"", last_updated:e.last_updated||"",
-    subjects:(e.subjects||[]).join("\n"), sources:(e.sources||[]).join("\n"),
-    what_it_tests:(e.what_it_tests||[]).join("\n"),
-    blueprint:(e.blueprint||[]).map(b=>({domain:b.domain||"",weight:b.weight??"",
-      question_type:b.question_type||"",priority:b.priority||"",confidence:b.confidence||"",
-      last_review:b.last_review||""})),
-    high_yield:(e.high_yield||[]).join("\n"), weak:(e.weak||[]).join("\n"),
-    volatile:(e.volatile||[]).join("\n"),
+    name: e.name || "", name_sub: e.name_sub || "", lang: e.lang === "en" ? "en" : "ko",
+    authority: e.authority || "", date: e.date || "", passing: e.passing || "",
+    syllabus_version: e.syllabus_version || "", target_score: e.target_score ?? "",
+    confidence: e.confidence || "", last_updated: e.last_updated || "",
+    subjects: (e.subjects || []).join("\n"), sources: (e.sources || []).join("\n"),
+    what_it_tests: (e.what_it_tests || []).join("\n"),
+    blueprint: (e.blueprint || []).map((b) => ({
+      domain: b.domain || "", weight: b.weight ?? "", question_type: b.question_type || "",
+      priority: b.priority || "", confidence: b.confidence || "", last_review: b.last_review || "" })),
+    high_yield: (e.high_yield || []).join("\n"), weak: (e.weak || []).join("\n"),
+    volatile: (e.volatile || []).join("\n"),
   };
-  st.topics = (d.topics||[]).map(tp=>{
-    const m = tp.matrix||{};
-    const cols = (m.columns||[]).map(c=>({key:c.key,label:c.label||"",label_ko:c.label_ko||"",mark:c.mark||"core"}));
-    const rows = (m.rows||[]).map(r=>{
-      const cells={};
-      for(const c of cols){
-        const raw = (r.cells||{})[c.key];
-        if(raw===undefined||raw===null) { cells[c.key]={v:"",mark:c.mark}; continue; }
-        if(typeof raw === "object") cells[c.key]={v:String(raw.v??raw.value??""),mark:raw.mark||c.mark};
-        else cells[c.key]={v:String(raw),mark:c.mark};
+  st.topics = (d.topics || []).map((tp) => {
+    const m = tp.matrix || {};
+    const cols = (m.columns || []).map((c) => ({
+      key: c.key, label: c.label || "", label_ko: c.label_ko || "", mark: c.mark || "core" }));
+    const rows = (m.rows || []).map((r) => {
+      const cells = {};
+      for (const c of cols) {
+        const raw = (r.cells || {})[c.key];
+        if (raw === undefined || raw === null) { cells[c.key] = { v: "", mark: c.mark }; continue; }
+        if (typeof raw === "object") cells[c.key] = { v: String(raw.v ?? raw.value ?? ""), mark: raw.mark || c.mark };
+        else cells[c.key] = { v: String(raw), mark: c.mark };
       }
-      return {label:r.label||"",sub:r.sub||"",cells};
+      return { label: r.label || "", sub: r.sub || "", cells };
     });
-    const ess = (tp.essentials||[]).slice(0,5);
-    while(ess.length<5) ess.push("");
+    const ess = (tp.essentials || []).slice(0, 5);
+    while (ess.length < 5) ess.push("");
     return {
-      id:tp.id||"", title:tp.title||"", archetype:ARCH[tp.archetype]?tp.archetype:"concept",
-      importance:tp.importance||"A", frequency:tp.frequency||"", why:tp.why||"",
-      core_question:tp.core_question||"", key_axis:tp.key_axis||"",
-      prerequisites:(tp.prerequisites||[]).join(", "), sources:(tp.sources||[]).join(", "),
-      updated:tp.updated||"", one_sentence:tp.one_sentence||"", essentials:ess,
-      matrix:{row_label:m.row_label||"",note:m.note||"",columns:cols,rows:rows},
-      decisive:{answer:(tp.decisive||{}).answer||"",
-        pairs:((tp.decisive||{}).pairs||[]).map(p=>({a:p.a||"",b:p.b||"",why:p.why||"",clue:p.clue||""}))},
-      traps:(tp.traps||[]).map(x=>({cue:x.cue||"",usually:x.usually||"",exception:x.exception||"",
-        why:x.why||"",source:x.source||""})),
-      evidence:(tp.evidence||[]).map(x=>({row:(x.cell||{}).row||"",column:(x.cell||{}).column||"",
-        source:x.source||"",exam:x.exam||"",question:x.question||"",tested_as:x.tested_as||"",risk:x.risk||""})),
+      id: tp.id || "", title: tp.title || "",
+      archetype: PRESETS.some((p) => p.id === tp.archetype) ? tp.archetype : "concept",
+      importance: tp.importance || "A", frequency: tp.frequency || "", why: tp.why || "",
+      core_question: tp.core_question || "", key_axis: tp.key_axis || "",
+      prerequisites: (tp.prerequisites || []).join(", "), sources: (tp.sources || []).join(", "),
+      updated: tp.updated || "", one_sentence: tp.one_sentence || "", essentials: ess,
+      matrix: { row_label: m.row_label || "", note: m.note || "", columns: cols, rows: rows },
+      decisive: {
+        answer: (tp.decisive || {}).answer || "",
+        pairs: ((tp.decisive || {}).pairs || []).map((p) => ({
+          a: p.a || "", b: p.b || "", why: p.why || "", clue: p.clue || "" })) },
+      traps: (tp.traps || []).map((x) => ({
+        cue: x.cue || "", usually: x.usually || "", exception: x.exception || "",
+        why: x.why || "", source: x.source || "" })),
+      evidence: (tp.evidence || []).map((x) => ({
+        row: (x.cell || {}).row || "", column: (x.cell || {}).column || "",
+        source: x.source || "", exam: x.exam || "", question: x.question || "",
+        tested_as: x.tested_as || "", risk: x.risk || "" })),
     };
   });
-  if(!st.topics.length) st.topics=[blankTopic()];
-  st.error_log = (d.error_log||[]).map(x=>({date:x.date||"",question:x.question||"",topic:x.topic||"",
-    mine:x.mine||"",correct:x.correct||"",error_type:x.error_type||"",
-    missing_distinction:x.missing_distinction||"",
-    mt:(x.matrix_update||{}).topic||"", mrow:(x.matrix_update||{}).row||"",
-    mcol:(x.matrix_update||{}).column||"", retest:x.retest||""}));
+  if (!st.topics.length) st.topics = [blankTopic()];
+  st.error_log = (d.error_log || []).map((x) => ({
+    date: x.date || "", question: x.question || "", topic: x.topic || "",
+    mine: x.mine || "", correct: x.correct || "", error_type: x.error_type || "",
+    missing_distinction: x.missing_distinction || "",
+    mt: (x.matrix_update || {}).topic || "", mrow: (x.matrix_update || {}).row || "",
+    mcol: (x.matrix_update || {}).column || "", retest: x.retest || "" }));
   st.compression = {
-    l2:((d.compression||{}).l2||[]).map(x=>({item:x.item||"",detail:x.detail||"",mark:x.mark||""})),
-    l3:(((d.compression||{}).l3)||[]).join("\n"),
+    l2: ((d.compression || {}).l2 || []).map((x) => ({
+      item: x.item || "", detail: x.detail || "", mark: x.mark || "" })),
+    l3: (((d.compression || {}).l3) || []).join("\n"),
   };
+  st.ui = { step: 5, mode: S.ui.mode, topic: 0 };
   S = st;
   render(); save();
 }
 
-/* --------------------------------------------------------------- rendering */
+/* ------------------------------------------------------- document + print */
 
-function card(id, title, count, bodyHtml){
-  const closed = S.open[id] === false ? " closed" : "";
-  return `<section class="card${closed}" data-card="${id}">
-    <h2 data-toggle="${id}">${esc(title)}${count!=null?`<span class="cnt">${count}</span>`:""}
-      <span class="tw">${closed?"▸":"▾"}</span></h2>
-    <div class="body">${bodyHtml}</div></section>`;
+/** Builds the same model the Node build produces, from the same YAML text. */
+function makeModel(edition) {
+  const raw = ExamMatrix.stripEmpty(jsyaml.load(buildYaml()));
+  const m = ExamMatrix.normalizeExam(raw);
+  if (edition !== "full") ExamMatrix.applyRecall(m);
+  return m;
 }
-function fld(label, path, type="text", opts){
+function makeHtml(edition) {
+  return ExamMatrix.renderDocument(makeModel(edition), edition, ExamMatrix.CSS);
+}
+
+const ED_NAME = { full: "전체본", recall: "빈칸 문제지", key: "정답지" };
+
+function printEdition(edition) {
+  let html;
+  try { html = makeHtml(edition); }
+  catch (err) { alert("만들 수 없습니다:\n" + err.message); return; }
+
+  const f = document.createElement("iframe");
+  f.style.cssText = "position:fixed;right:0;bottom:0;width:1px;height:1px;opacity:0;border:0";
+  document.body.appendChild(f);
+  const d = f.contentDocument;
+  d.open(); d.write(html); d.close();
+  const go = () => {
+    try { f.contentWindow.focus(); f.contentWindow.print(); }
+    catch (e) { alert("인쇄 창을 열지 못했습니다. 미리보기에서 인쇄해 주세요."); }
+    setTimeout(() => f.remove(), 60000);
+  };
+  // Give the browser a beat to lay the document out before the print dialog.
+  if (d.readyState === "complete") setTimeout(go, 400); else f.onload = () => setTimeout(go, 400);
+  flash(ED_NAME[edition] + " 인쇄 창을 열었습니다");
+}
+
+function preview(edition) {
+  let html;
+  try { html = makeHtml(edition); }
+  catch (err) { alert("만들 수 없습니다:\n" + err.message); return; }
+  document.getElementById("modalTitle").textContent = ED_NAME[edition] + " 미리보기";
+  document.getElementById("modalPre").style.display = "none";
+  const fr = document.getElementById("modalFrame");
+  fr.style.display = "";
+  fr.srcdoc = html;
+  document.getElementById("modalPrint").style.display = "";
+  document.getElementById("modalPrint").onclick = () => printEdition(edition);
+  document.getElementById("modal").classList.remove("hide");
+}
+
+function showYaml() {
+  document.getElementById("modalTitle").textContent = "저장 파일 (YAML)";
+  document.getElementById("modalFrame").style.display = "none";
+  const pre = document.getElementById("modalPre");
+  pre.style.display = ""; pre.textContent = buildYaml();
+  document.getElementById("modalPrint").style.display = "none";
+  document.getElementById("modal").classList.remove("hide");
+}
+
+function downloadYaml() {
+  const name = (slug(S.exam.name) || "시험표") + ".yaml";
+  const blob = new Blob([buildYaml()], { type: "text/yaml;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  flash("저장했습니다");
+}
+
+/* ------------------------------------------------------------ easy screens */
+
+function ensureTopic() {
+  if (!S.topics.length) S.topics = [blankTopic()];
+  if (S.ui.topic >= S.topics.length) S.ui.topic = 0;
+  const tp = cur();
+  while (tp.matrix.rows.length < 2) tp.matrix.rows.push({ label: "", sub: "", cells: {} });
+  return tp;
+}
+
+function addColumn(tp, label) {
+  let n = tp.matrix.columns.length + 1, key = "c" + n;
+  while (tp.matrix.columns.some((c) => c.key === key)) key = "c" + (++n);
+  tp.matrix.columns.push({ key, label: "", label_ko: label || "", mark: "core" });
+}
+
+const screens = {
+  /* --------------------------------------------------------------- 0 시작 */
+  0: () => `
+  <div class="screen">
+    <h1>헷갈리는 걸 표로 만들면, 시험지가 나옵니다</h1>
+    <p class="lede">헷갈리는 것 둘을 나란히 놓고 <b>뭐가 다른지</b> 칸을 채우면 끝입니다.
+    그러면 <b>전체본 · 빈칸 문제지 · 정답지</b> 세 가지가 만들어집니다. 3분이면 됩니다.</p>
+    <div class="pick">
+      <button class="pcard" data-act="start">
+        <div class="ic">✏️</div><div class="t">새로 만들기</div>
+        <div class="d">질문 몇 개에 답하면 표가 완성됩니다</div></button>
+      <button class="pcard" data-act="sample">
+        <div class="ic">👀</div><div class="t">예시 먼저 보기</div>
+        <div class="d">완성된 표가 어떻게 생겼는지 바로 확인</div></button>
+      <button class="pcard" data-act="loadfile">
+        <div class="ic">📂</div><div class="t">만들던 것 열기</div>
+        <div class="d">저장해 둔 파일(.yaml)을 불러옵니다</div></button>
+    </div>
+    <div class="tip"><b>종이에 손으로 쓰고 싶다면?</b> 빈 양식 PDF가 따로 있습니다 —
+    아이패드 굿노트에서 속지로 쓸 수 있어요. (프로젝트의 <code>output/blank</code> 폴더)</div>
+  </div>`,
+
+  /* --------------------------------------------------------------- 1 시험 */
+  1: () => `
+  <div class="screen">
+    <h1>무슨 시험을 준비하나요?</h1>
+    <p class="lede">표지에 들어갈 이름입니다. 정확하지 않아도 되고, 나중에 바꿔도 됩니다.</p>
+    <div class="fld">
+      <label for="exname">시험 이름</label>
+      <input class="big" id="exname" type="text" data-p="exam.name"
+        value="${esc(S.exam.name)}" placeholder="예: 2학기 중간고사 과학">
+    </div>
+    <div class="two">
+      <div class="fld"><label>시험 날짜 <span style="font-weight:400;color:var(--muted)">(선택)</span></label>
+        <input type="date" data-p="exam.date" value="${esc(S.exam.date)}"></div>
+      <div class="fld"><label>과목 <span style="font-weight:400;color:var(--muted)">(선택)</span></label>
+        <input type="text" data-p="exam.subjects" value="${esc(S.exam.subjects)}" placeholder="예: 과학"></div>
+    </div>
+    <div class="nav"><button class="btn" data-act="back">← 뒤로</button><span class="sp"></span>
+      <button class="btn pri lg" data-act="next">다음 →</button></div>
+  </div>`,
+
+  /* ------------------------------------------------------ 2 헷갈리는 것 */
+  2: () => {
+    const tp = ensureTopic();
+    return `
+  <div class="screen">
+    <h1>뭐가 헷갈리나요?</h1>
+    <p class="lede">헷갈리는 것들을 <b>둘 이상</b> 적어주세요. 이게 표의 <b>세로줄</b>이 됩니다.
+    나란히 놓고 비교할 것들이에요.</p>
+    <div class="tip">예시 &nbsp;·&nbsp; <b>TCP / UDP</b> &nbsp;·&nbsp; <b>매슬로 / 앨더퍼</b>
+      &nbsp;·&nbsp; <b>행정심판 / 행정소송</b> &nbsp;·&nbsp; <b>동화 / 조절</b></div>
+    <div class="fld">
+      <label>비교할 것들</label>
+      ${tp.matrix.rows.map((r, i) => `
+        <div class="lrow"><span class="idx">${i + 1}</span>
+          <input type="text" data-p="topics.${S.ui.topic}.matrix.rows.${i}.label"
+            value="${esc(r.label)}" placeholder="${i === 0 ? "예: TCP" : i === 1 ? "예: UDP" : "또 다른 것"}">
+          ${tp.matrix.rows.length > 2 ? `<button class="xb" data-act="delrow" data-i="${i}">✕</button>` : ""}
+        </div>`).join("")}
+      <button class="addb" data-act="addrow">＋ 하나 더 추가</button>
+    </div>
+    <div class="fld">
+      <label>이 묶음의 이름 <span style="font-weight:400;color:var(--muted)">(선택)</span></label>
+      <p class="help">표 제목이 됩니다. 비워두면 위에 적은 것들로 자동으로 만들어집니다.</p>
+      <input type="text" data-p="topics.${S.ui.topic}.title" value="${esc(tp.title)}"
+        placeholder="예: TCP vs UDP">
+    </div>
+    <div class="nav"><button class="btn" data-act="back">← 뒤로</button><span class="sp"></span>
+      <button class="btn pri lg" data-act="next" ${validRows() ? "" : "disabled"}>다음 →</button></div>
+    <p class="help" id="gateNote" style="margin-top:10px;${validRows() ? "display:none" : ""}">비교하려면 최소 두 개가 필요합니다.</p>
+  </div>`;
+  },
+
+  /* -------------------------------------------------------- 3 비교 기준 */
+  3: () => {
+    const tp = ensureTopic();
+    const names = tp.matrix.rows.map((r) => r.label).filter(Boolean);
+    return `
+  <div class="screen">
+    <h1>어떤 점을 비교할까요?</h1>
+    <p class="lede">${esc(names.slice(0, 3).join(" / ") || "적어둔 것들")}${names.length > 3 ? " 등" : ""}을
+    비교할 <b>기준</b>을 정해주세요. 이게 표의 <b>가로줄</b>이 됩니다.</p>
+
+    <div class="fld">
+      <label>시험 종류로 추천받기</label>
+      <p class="help">한 번 누르면 그 시험에 흔히 쓰는 기준이 채워집니다. 그대로 쓰지 말고 <b>고쳐 쓰세요</b>.</p>
+      <div class="chips">
+        ${PRESETS.map((p) => `<button class="chip set" data-act="preset" data-id="${p.id}">
+          ${esc(p.name)} <span style="color:var(--muted);font-size:12px">${esc(p.eg)}</span></button>`).join("")}
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>비교 기준</label>
+      ${tp.matrix.columns.map((c, i) => `
+        <div class="lrow"><span class="idx">${i + 1}</span>
+          <input type="text" data-p="topics.${S.ui.topic}.matrix.columns.${i}.label_ko"
+            value="${esc(c.label_ko)}" placeholder="예: 뜻">
+          <button class="xb" data-act="delcol" data-i="${i}">✕</button>
+        </div>`).join("") || `<p class="help">아직 없습니다. 아래에서 골라 담으세요.</p>`}
+      <button class="addb" data-act="addcol">＋ 직접 입력해서 추가</button>
+      <div class="chips" style="margin-top:12px">
+        ${QUICK_COLS.map((q) => `<button class="chip" data-act="quickcol" data-v="${esc(q)}">＋ ${esc(q)}</button>`).join("")}
+      </div>
+    </div>
+
+    <div class="nav"><button class="btn" data-act="back">← 뒤로</button><span class="sp"></span>
+      <button class="btn pri lg" data-act="next" ${tp.matrix.columns.length ? "" : "disabled"}>다음 →</button></div>
+  </div>`;
+  },
+
+  /* -------------------------------------------------------- 4 표 채우기 */
+  4: () => {
+    const tp = ensureTopic();
+    return `
+  <div class="screen">
+    <h1>표를 채워주세요</h1>
+    <p class="lede">아는 것만 채워도 됩니다. 빈 칸은 그냥 비워두면 인쇄될 때 알아서 빠집니다.</p>
+    <div class="tip"><b>칸 아래 작은 버튼</b>을 누르면 표시를 바꿀 수 있어요.
+      여기가 헷갈리는 지점이면 <b>갈림</b>, 예외면 <b>예외</b>, 시험이 함정 파는 곳이면 <b>함정</b>.
+      표시한 칸이 <b>빈칸 문제지</b>에서 우선 출제됩니다.</div>
+    ${gridEditor(tp)}
+    <div class="nav"><button class="btn" data-act="back">← 뒤로</button><span class="sp"></span>
+      <button class="btn pri lg" data-act="next">완성 →</button></div>
+  </div>`;
+  },
+
+  /* ---------------------------------------------------------- 5 완성 */
+  5: () => {
+    const nCells = S.topics.reduce((a, t) => a + t.matrix.rows.reduce((b, r) =>
+      b + Object.values(r.cells || {}).filter((c) => String(c.v || "").trim()).length, 0), 0);
+    return `
+  <div class="screen">
+    <h1>다 됐습니다 🎉</h1>
+    <p class="lede">주제 <b>${S.topics.length}개</b>, 채운 칸 <b>${nCells}개</b>.
+    아래를 누르면 인쇄 창이 열립니다. 거기서 <b>“PDF로 저장”</b>을 고르면 파일이 됩니다.</p>
+
+    <div class="dl3">
+      <button class="dcard hero" data-act="pdf" data-ed="full">
+        <div class="ic">📄</div><div class="t">전체본</div>
+        <div class="d">다 보이는 표. 먼저 이걸 인쇄해서 읽어보세요.</div></button>
+      <button class="dcard" data-act="pdf" data-ed="recall">
+        <div class="ic">✏️</div><div class="t">빈칸 문제지</div>
+        <div class="d">중요한 칸이 비어 있습니다. 손으로 채우면서 외우세요.</div></button>
+      <button class="dcard" data-act="pdf" data-ed="key">
+        <div class="ic">✅</div><div class="t">정답지</div>
+        <div class="d">빈칸 문제지를 다 쓴 다음에 채점하세요.</div></button>
+    </div>
+    <div class="nav" style="margin-top:16px">
+      <button class="btn" data-act="prev" data-ed="full">👁 미리보기</button>
+      <button class="btn" data-act="step" data-i="4">표 고치기</button>
+      <button class="btn" data-act="addtopic">＋ 주제 더 만들기</button>
+      <span class="sp"></span>
+      <button class="btn" data-act="mode" data-v="full">더 자세히 쓰기 →</button>
+    </div>
+
+    ${S.topics.length > 1 ? `<h3 class="sh">만든 주제</h3>
+      ${S.topics.map((t, i) => `<div class="lrow">
+        <span class="idx">${i + 1}</span>
+        <input type="text" data-p="topics.${i}.title" value="${esc(t.title)}" placeholder="주제 이름">
+        <button class="sm" data-act="edittopic" data-i="${i}">고치기</button>
+        <button class="xb" data-act="deltopic" data-i="${i}">✕</button></div>`).join("")}` : ""}
+
+    <div class="warnbox"><b>브라우저에만 저장됩니다.</b> 같은 브라우저에서 다시 열면 이어서 쓸 수 있지만,
+      다른 기기에서 쓰거나 오래 보관하려면 아래 <b>파일로 저장</b>을 눌러 <code>.yaml</code> 파일을 받아두세요.</div>
+  </div>`;
+  },
+};
+
+function validRows() {
+  const tp = cur();
+  return tp && tp.matrix.rows.filter((r) => String(r.label || "").trim()).length >= 2;
+}
+
+/**
+ * Re-checks whether the step's Next button should be enabled.
+ * Called on every keystroke — a full re-render here would blur the input the
+ * learner is still typing into, which is how the button used to stay greyed out
+ * even after they had filled the fields in.
+ */
+function syncGate() {
+  const btn = document.querySelector("[data-act=next]");
+  if (!btn) return;
+  let ok = true;
+  if (S.ui.step === 2) ok = validRows();
+  if (S.ui.step === 3) ok = cur() && cur().matrix.columns.length > 0;
+  btn.disabled = !ok;
+  const note = document.getElementById("gateNote");
+  if (note) note.style.display = ok ? "none" : "";
+}
+
+function gridEditor(tp) {
+  const head = tp.matrix.columns.map((c, ci) => `<th>
+    <input type="text" data-p="topics.${S.ui.topic}.matrix.columns.${ci}.label_ko"
+      value="${esc(c.label_ko)}" placeholder="기준 ${ci + 1}"></th>`).join("");
+  const body = tp.matrix.rows.map((r, ri) => {
+    const cells = tp.matrix.columns.map((c) => {
+      const cell = r.cells[c.key] || (r.cells[c.key] = { v: "", mark: c.mark || "core" });
+      const mk = cell.mark || "core";
+      const cls = mk !== "core" ? ` class="c-${mk}"` : "";
+      return `<td${cls}>
+        <textarea data-cell="${S.ui.topic}.${ri}.${c.key}" placeholder="">${esc(cell.v)}</textarea>
+        <button class="mkb" data-m="${mk}" data-cyc="${S.ui.topic}.${ri}.${c.key}"
+          title="${esc(MARK_HELP[mk])}">${esc(MARK_KO[mk])}</button></td>`;
+    }).join("");
+    return `<tr><td class="rl">
+        <input type="text" data-p="topics.${S.ui.topic}.matrix.rows.${ri}.label"
+          value="${esc(r.label)}" placeholder="항목 ${ri + 1}"></td>${cells}</tr>`;
+  }).join("");
+  return `<div class="gwrap"><table class="g">
+      <thead><tr><th class="rl" style="min-width:135px">비교할 것</th>${head}</tr></thead>
+      <tbody>${body}</tbody></table></div>
+    <div class="legend">
+      ${MARK_CYCLE.map((m) => `<span><b>${MARK_KO[m]}</b> — ${MARK_HELP[m]}</span>`).join("")}
+    </div>
+    <div class="nav" style="margin-top:12px;gap:9px">
+      <button class="sm" data-act="addrow">＋ 줄 추가</button>
+      <button class="sm" data-act="addcol">＋ 기준 추가</button>
+    </div>`;
+}
+
+/* ------------------------------------------------------------- full mode */
+
+function get(path) {
+  return path.split(".").reduce((o, k) => {
+    if (o == null) return "";
+    return o[/^\d+$/.test(k) ? Number(k) : k];
+  }, S) ?? "";
+}
+function set(path, val) {
+  const ks = path.split(".");
+  let o = S;
+  for (let i = 0; i < ks.length - 1; i++) o = o[/^\d+$/.test(ks[i]) ? Number(ks[i]) : ks[i]];
+  const last = ks[ks.length - 1];
+  o[/^\d+$/.test(last) ? Number(last) : last] = val;
+}
+function fld(label, path, type = "text", opts) {
   const v = get(path);
-  if(type==="textarea") return `<label class="f"><span>${esc(label)}</span>
+  if (type === "textarea") return `<label class="f"><span>${esc(label)}</span>
     <textarea data-p="${path}">${esc(v)}</textarea></label>`;
-  if(type==="select") return `<label class="f"><span>${esc(label)}</span>
-    <select data-p="${path}">${opts.map(o=>{
-      const [val,txt]=Array.isArray(o)?o:[o,o];
-      return `<option value="${esc(val)}"${String(v)===String(val)?" selected":""}>${esc(txt)}</option>`;
+  if (type === "select") return `<label class="f"><span>${esc(label)}</span>
+    <select data-p="${path}">${opts.map((o) => {
+      const [val, txt] = Array.isArray(o) ? o : [o, o];
+      return `<option value="${esc(val)}"${String(v) === String(val) ? " selected" : ""}>${esc(txt)}</option>`;
     }).join("")}</select></label>`;
   return `<label class="f"><span>${esc(label)}</span>
     <input type="${type}" data-p="${path}" value="${esc(v)}"></label>`;
 }
-function get(path){
-  return path.split(".").reduce((o,k)=>{
-    if(o==null) return "";
-    const i = /^\d+$/.test(k) ? Number(k) : k;
-    return o[i];
-  }, S) ?? "";
-}
-function set(path, val){
-  const ks = path.split(".");
-  let o = S;
-  for(let i=0;i<ks.length-1;i++){
-    const k = /^\d+$/.test(ks[i]) ? Number(ks[i]) : ks[i];
-    o = o[k];
-  }
-  const last = ks[ks.length-1];
-  o[/^\d+$/.test(last)?Number(last):last] = val;
+function card(id, title, count, body) {
+  const closed = S.open[id] === false ? " closed" : "";
+  return `<section class="card${closed}" data-card="${id}">
+    <h2 data-toggle="${id}">${esc(title)}${count != null ? `<span class="cnt">${count}</span>` : ""}
+      <span class="tw">${closed ? "▸" : "▾"}</span></h2><div class="body">${body}</div></section>`;
 }
 
-function matrixEditor(tp, ti){
-  const cols = tp.matrix.columns;
-  const head = cols.map((c,ci)=>`<th>
-    <div class="colhd">
-      <input type="text" data-p="topics.${ti}.matrix.columns.${ci}.${S.exam.lang==="ko"?"label_ko":"label"}"
-        value="${esc(S.exam.lang==="ko"?(c.label_ko||""):(c.label||""))}" placeholder="${esc(t("e_col"))}">
-      <div class="rw">
-        <select class="mk mk-${c.mark}" data-p="topics.${ti}.matrix.columns.${ci}.mark">
-          ${MARKS.map(m=>`<option value="${m}"${c.mark===m?" selected":""}>${m}</option>`).join("")}
-        </select>
-        <button class="sm dg" data-act="delcol" data-t="${ti}" data-c="${ci}">✕</button>
-      </div>
-    </div></th>`).join("");
+function fullTopicCard(tp, ti) {
+  const rowOpts = tp.matrix.rows.map((r) => r.label).filter(Boolean);
+  const colOpts = tp.matrix.columns.map((c) => [c.key, c.label_ko || c.label || c.key]);
+  return card("t" + ti, `${String(ti + 1).padStart(2, "0")} · ${tp.title || "주제"}`,
+    `${tp.matrix.rows.length}×${tp.matrix.columns.length}`, `
+    <div class="g3">
+      ${fld("주제 이름", `topics.${ti}.title`)}
+      ${fld("시험 종류", `topics.${ti}.archetype`, "select", PRESETS.map((p) => [p.id, p.name]))}
+      ${fld("중요도", `topics.${ti}.importance`, "select", [["A", "A · 꼭 나옴"], ["B", "B · 가끔"], ["C", "C · 드묾"]])}
+    </div>
+    <div class="g3" style="margin-top:11px">
+      ${fld("출제 빈도", `topics.${ti}.frequency`)}
+      ${fld("핵심 비교축", `topics.${ti}.key_axis`)}
+      ${fld("최종 수정", `topics.${ti}.updated`, "date")}
+    </div>
+    <div style="margin-top:11px">${fld("왜 중요한가", `topics.${ti}.why`, "textarea")}</div>
+    <div style="margin-top:11px">${fld("한 문장 요약 — 빈칸 문제지에서 가려집니다", `topics.${ti}.one_sentence`, "textarea")}</div>
 
-  const body = tp.matrix.rows.map((r,ri)=>{
-    const cells = cols.map((c,ci)=>{
-      const cell = r.cells[c.key] || (r.cells[c.key]={v:"",mark:c.mark});
-      const cls = cell.mark && cell.mark!=="core" ? ` class="c-${cell.mark}"` : "";
-      return `<td${cls}>
-        <textarea data-cell="${ti}.${ri}.${c.key}" placeholder="">${esc(cell.v)}</textarea>
-        <select class="mk mk-${cell.mark}" data-cellmark="${ti}.${ri}.${c.key}">
-          ${MARKS.map(m=>`<option value="${m}"${cell.mark===m?" selected":""}>${m}</option>`).join("")}
-        </select></td>`;
-    }).join("");
-    return `<tr><td class="rl">
-        <input type="text" data-p="topics.${ti}.matrix.rows.${ri}.label" value="${esc(r.label)}" placeholder="${esc(t("e_row"))}">
-        <input type="text" data-p="topics.${ti}.matrix.rows.${ri}.sub" value="${esc(r.sub)}" placeholder="sub" style="margin-top:4px;font-size:11.5px">
-        <button class="sm dg" data-act="delrow" data-t="${ti}" data-r="${ri}" style="margin-top:4px">✕</button>
-      </td>${cells}</tr>`;
-  }).join("");
-
-  return `<p class="hint">${t("hint_matrix")}</p>
-    <div class="grid g2" style="margin-bottom:9px">
-      ${fld(t("row_label"), `topics.${ti}.matrix.row_label`)}
-      ${fld(t("mnote"), `topics.${ti}.matrix.note`)}
-    </div>
-    <div class="mxwrap"><table class="mx">
-      <thead><tr><th class="rl">${esc(t("row_label"))}</th>${head}</tr></thead>
-      <tbody>${body}</tbody>
-    </table></div>
-    <div style="margin-top:8px;display:flex;gap:7px">
-      <button class="sm" data-act="addrow" data-t="${ti}">+ ${esc(t("add_row"))}</button>
-      <button class="sm" data-act="addcol" data-t="${ti}">+ ${esc(t("add_col"))}</button>
-    </div>`;
-}
-
-function topicCard(tp, ti){
-  const rowOpts = tp.matrix.rows.map(r=>r.label).filter(Boolean);
-  const colOpts = tp.matrix.columns.map(c=>[c.key, (S.exam.lang==="ko"?c.label_ko:c.label)||c.key]);
-  const body = `
-    <div class="grid g3">
-      ${fld(t("title"), `topics.${ti}.title`)}
-      ${fld(t("id"), `topics.${ti}.id`)}
-      ${fld(t("archetype"), `topics.${ti}.archetype`, "select",
-        Object.keys(ARCH).map(k=>[k, ARCH[k][UI]||ARCH[k].en]))}
-    </div>
-    <div class="grid g3" style="margin-top:10px">
-      ${fld(t("importance"), `topics.${ti}.importance`, "select", ["A","B","C"])}
-      ${fld(t("frequency"), `topics.${ti}.frequency`)}
-      ${fld(t("tupdated"), `topics.${ti}.updated`, "date")}
-    </div>
-    <div class="grid g2" style="margin-top:10px">
-      ${fld(t("key_axis"), `topics.${ti}.key_axis`)}
-      ${fld(t("core_q"), `topics.${ti}.core_question`)}
-    </div>
-    <div class="grid g2" style="margin-top:10px">
-      ${fld(t("prereq"), `topics.${ti}.prerequisites`)}
-      ${fld(t("tsources"), `topics.${ti}.sources`)}
-    </div>
-    <div style="margin-top:10px">${fld(t("why"), `topics.${ti}.why`, "textarea")}</div>
-    <div style="margin-top:10px">${fld(t("one_sentence"), `topics.${ti}.one_sentence`, "textarea")}</div>
-
-    <h3 style="font-size:12px;margin:16px 0 4px">${esc(t("essentials"))}</h3>
-    <p class="hint">${t("hint_ess")}</p>
-    ${tp.essentials.map((v,i)=>`<div style="display:flex;gap:7px;align-items:center;margin-bottom:6px">
-      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);width:14px">${i+1}</span>
+    <h3 class="sh">꼭 외울 것 (최대 5개)</h3>
+    ${tp.essentials.map((v, i) => `<div class="lrow"><span class="idx">${i + 1}</span>
       <input type="text" data-p="topics.${ti}.essentials.${i}" value="${esc(v)}"></div>`).join("")}
 
-    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("matrix"))}</h3>
-    ${matrixEditor(tp, ti)}
+    <h3 class="sh">비교표</h3>
+    ${ti === S.ui.topic ? gridEditor(tp)
+      : `<button class="sm" data-act="edittopic" data-i="${ti}">이 주제의 표 편집하기</button>`}
 
-    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("decisive"))}</h3>
-    ${fld(t("decisive_a"), `topics.${ti}.decisive.answer`, "textarea")}
-    ${tp.decisive.pairs.map((p,pi)=>`<div class="item" style="margin-top:9px">
-      <div class="ih"><span class="n">${pi+1}</span><span class="t">${esc(p.a||"")} / ${esc(p.b||"")}</span>
-        <button class="sm dg" data-act="delpair" data-t="${ti}" data-i="${pi}">${esc(t("del"))}</button></div>
-      <div class="grid g2">
-        ${fld(t("p_a"), `topics.${ti}.decisive.pairs.${pi}.a`)}
-        ${fld(t("p_b"), `topics.${ti}.decisive.pairs.${pi}.b`)}
-      </div>
-      <div class="grid g2" style="margin-top:8px">
-        ${fld(t("p_why"), `topics.${ti}.decisive.pairs.${pi}.why`, "textarea")}
-        ${fld(t("p_clue"), `topics.${ti}.decisive.pairs.${pi}.clue`, "textarea")}
-      </div></div>`).join("")}
-    <button class="sm addbtn" data-act="addpair" data-t="${ti}">+ ${esc(t("add_pair"))}</button>
-
-    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("traps"))}</h3>
-    ${tp.traps.map((x,xi)=>`<div class="item">
-      <div class="ih"><span class="n">${xi+1}</span><span class="t">${esc(x.cue||"")}</span>
-        <button class="sm dg" data-act="deltrap" data-t="${ti}" data-i="${xi}">${esc(t("del"))}</button></div>
-      ${fld(t("t_cue"), `topics.${ti}.traps.${xi}.cue`, "textarea")}
-      <div class="grid g2" style="margin-top:8px">
-        ${fld(t("t_usually"), `topics.${ti}.traps.${xi}.usually`)}
-        ${fld(t("t_src"), `topics.${ti}.traps.${xi}.source`)}
-      </div>
-      <div class="grid g2" style="margin-top:8px">
-        ${fld(t("t_exc"), `topics.${ti}.traps.${xi}.exception`, "textarea")}
-        ${fld(t("t_why"), `topics.${ti}.traps.${xi}.why`, "textarea")}
-      </div></div>`).join("")}
-    <button class="sm addbtn" data-act="addtrap" data-t="${ti}">+ ${esc(t("add_trap"))}</button>
-
-    <h3 style="font-size:12px;margin:18px 0 6px">${esc(t("evidence"))}</h3>
-    ${tp.evidence.map((x,xi)=>`<div class="item">
-      <div class="ih"><span class="n">${xi+1}</span><span class="t">${esc(x.row||"")} · ${esc(x.column||"")}</span>
-        <button class="sm dg" data-act="delev" data-t="${ti}" data-i="${xi}">${esc(t("del"))}</button></div>
-      <div class="grid g3">
-        ${fld(t("e_row"), `topics.${ti}.evidence.${xi}.row`, "select", [["",t("none")]].concat(rowOpts.map(r=>[r,r])))}
-        ${fld(t("e_col"), `topics.${ti}.evidence.${xi}.column`, "select", [["",t("none")]].concat(colOpts))}
-        ${fld(t("e_risk"), `topics.${ti}.evidence.${xi}.risk`, "select", [["",t("none")],["high","high"],["mid","mid"],["low","low"]])}
-      </div>
-      <div class="grid g3" style="margin-top:8px">
-        ${fld(t("e_src"), `topics.${ti}.evidence.${xi}.source`)}
-        ${fld(t("e_exam"), `topics.${ti}.evidence.${xi}.exam`)}
-        ${fld(t("e_q"), `topics.${ti}.evidence.${xi}.question`)}
-      </div>
-      <div style="margin-top:8px">${fld(t("e_as"), `topics.${ti}.evidence.${xi}.tested_as`, "textarea")}</div>
+    <h3 class="sh">딱 하나로 구분한다면?</h3>
+    ${fld("한 가지 기준만 쓴다면 무엇으로 가르겠는가", `topics.${ti}.decisive.answer`, "textarea")}
+    ${tp.decisive.pairs.map((p, pi) => `<div class="item" style="margin-top:10px">
+      <div class="ih"><span class="n">${pi + 1}</span><span class="t">${esc(p.a)} / ${esc(p.b)}</span>
+        <button class="sm dg" data-act="delpair" data-t="${ti}" data-i="${pi}">삭제</button></div>
+      <div class="g3">${fld("A", `topics.${ti}.decisive.pairs.${pi}.a`)}
+        ${fld("B", `topics.${ti}.decisive.pairs.${pi}.b`)}
+        ${fld("결정적 단서", `topics.${ti}.decisive.pairs.${pi}.clue`)}</div>
+      <div style="margin-top:9px">${fld("왜 헷갈리는가", `topics.${ti}.decisive.pairs.${pi}.why`, "textarea")}</div>
     </div>`).join("")}
-    <button class="sm addbtn" data-act="addev" data-t="${ti}">+ ${esc(t("add_ev"))}</button>
+    <button class="sm" data-act="addpair" data-t="${ti}">＋ 헷갈리는 짝 추가</button>
 
-    <div style="margin-top:18px;border-top:1px solid var(--hair);padding-top:10px">
-      <button class="sm dg" data-act="deltopic" data-t="${ti}">${esc(t("del"))} — ${esc(tp.title||t("s_topics"))}</button>
-    </div>`;
-  return card("topic"+ti, `${String(ti+1).padStart(2,"0")} · ${tp.title || t("s_topics")}`,
-    `${tp.matrix.rows.length}×${tp.matrix.columns.length}`, body);
+    <h3 class="sh">함정 정리</h3>
+    ${tp.traps.map((x, xi) => `<div class="item">
+      <div class="ih"><span class="n">${xi + 1}</span><span class="t">${esc(x.cue)}</span>
+        <button class="sm dg" data-act="deltrap" data-t="${ti}" data-i="${xi}">삭제</button></div>
+      ${fld("시험에 나오는 진술 그대로", `topics.${ti}.traps.${xi}.cue`, "textarea")}
+      <div class="g3" style="margin-top:9px">
+        ${fld("대체로", `topics.${ti}.traps.${xi}.usually`)}
+        ${fld("근거", `topics.${ti}.traps.${xi}.source`)}
+        ${fld("예외", `topics.${ti}.traps.${xi}.exception`)}</div>
+      <div style="margin-top:9px">${fld("왜 속는가", `topics.${ti}.traps.${xi}.why`, "textarea")}</div>
+    </div>`).join("")}
+    <button class="sm" data-act="addtrap" data-t="${ti}">＋ 함정 추가</button>
+
+    <h3 class="sh">기출 근거</h3>
+    ${tp.evidence.map((x, xi) => `<div class="item">
+      <div class="ih"><span class="n">${xi + 1}</span><span class="t">${esc(x.row)} · ${esc(x.column)}</span>
+        <button class="sm dg" data-act="delev" data-t="${ti}" data-i="${xi}">삭제</button></div>
+      <div class="g3">
+        ${fld("어느 줄", `topics.${ti}.evidence.${xi}.row`, "select", [["", "—"]].concat(rowOpts.map((r) => [r, r])))}
+        ${fld("어느 기준", `topics.${ti}.evidence.${xi}.column`, "select", [["", "—"]].concat(colOpts))}
+        ${fld("오답 위험", `topics.${ti}.evidence.${xi}.risk`, "select", [["", "—"], ["high", "상"], ["mid", "중"], ["low", "하"]])}</div>
+      <div class="g3" style="margin-top:9px">
+        ${fld("출처", `topics.${ti}.evidence.${xi}.source`)}
+        ${fld("시험 · 연도", `topics.${ti}.evidence.${xi}.exam`)}
+        ${fld("문항", `topics.${ti}.evidence.${xi}.question`)}</div>
+      <div style="margin-top:9px">${fld("기출 표현 그대로", `topics.${ti}.evidence.${xi}.tested_as`, "textarea")}</div>
+    </div>`).join("")}
+    <button class="sm" data-act="addev" data-t="${ti}">＋ 기출 근거 추가</button>
+
+    <div style="margin-top:18px;border-top:1px solid var(--hair);padding-top:11px">
+      <button class="sm dg" data-act="deltopic" data-i="${ti}">이 주제 삭제</button></div>`);
 }
 
-function render(){
-  document.documentElement.lang = UI;
-  document.getElementById("subtitle").textContent = S.exam.name || "";
-  document.querySelectorAll("[data-i]").forEach(b=>b.textContent = t(b.dataset.i));
-  document.getElementById("btnLang").textContent = UI==="ko" ? "EN" : "한국어";
-  document.getElementById("btnYamlClose").textContent = t("close");
+function renderFull() {
+  const topicOpts = S.topics.map((x, i) => [x.id || slug(x.title) || ("topic-" + (i + 1)), x.title || ("#" + (i + 1))]);
+  const exam = card("exam", "시험 정보", null, `
+    <div class="g3">${fld("시험 이름", "exam.name")}${fld("부제", "exam.name_sub")}
+      ${fld("문서 언어", "exam.lang", "select", [["ko", "한국어"], ["en", "English"]])}</div>
+    <div class="g3" style="margin-top:11px">${fld("시행 기관", "exam.authority")}
+      ${fld("시험일", "exam.date", "date")}${fld("최종 수정", "exam.last_updated", "date")}</div>
+    <div class="g3" style="margin-top:11px">${fld("합격 기준", "exam.passing")}
+      ${fld("목표 점수", "exam.target_score")}
+      ${fld("자신감 (1–5)", "exam.confidence", "select", [["", "—"], 1, 2, 3, 4, 5])}</div>
+    <div style="margin-top:11px">${fld("출제기준 · 버전", "exam.syllabus_version")}</div>
+    <div class="g3" style="margin-top:11px">${fld("과목 (줄바꿈)", "exam.subjects", "textarea")}
+      ${fld("학습 자료 (줄바꿈)", "exam.sources", "textarea")}
+      ${fld("이 시험이 진짜 묻는 것 (줄바꿈)", "exam.what_it_tests", "textarea")}</div>`);
 
-  const topicOpts = S.topics.map((x,i)=>[x.id||slug(x.title)||("topic-"+(i+1)), x.title||("#"+(i+1))]);
+  const bp = card("bp", "출제 영역", S.exam.blueprint.length, `
+    ${S.exam.blueprint.map((b, i) => `<div class="item">
+      <div class="ih"><span class="n">${i + 1}</span><span class="t">${esc(b.domain)}</span>
+        <button class="sm dg" data-act="deldomain" data-i="${i}">삭제</button></div>
+      <div class="g3">${fld("영역", `exam.blueprint.${i}.domain`)}${fld("비중 %", `exam.blueprint.${i}.weight`)}
+        ${fld("문항 유형", `exam.blueprint.${i}.question_type`)}</div>
+      <div class="g3" style="margin-top:9px">
+        ${fld("우선순위", `exam.blueprint.${i}.priority`, "select", ["A", "B", "C"])}
+        ${fld("자신감", `exam.blueprint.${i}.confidence`, "select", [["", "—"], 1, 2, 3, 4, 5])}
+        ${fld("최근 복습", `exam.blueprint.${i}.last_review`, "date")}</div></div>`).join("")}
+    <button class="sm" data-act="adddomain">＋ 영역 추가</button>
+    <div class="g3" style="margin-top:14px">${fld("빈출 주제", "exam.high_yield", "textarea")}
+      ${fld("취약 주제", "exam.weak", "textarea")}${fld("개정 민감", "exam.volatile", "textarea")}</div>`);
 
-  const exam = card("exam", t("s_exam"), null, `
-    <div class="grid g3">
-      ${fld(t("name"), "exam.name")}
-      ${fld(t("name_sub"), "exam.name_sub")}
-      ${fld(t("lang"), "exam.lang", "select", [["ko","한국어"],["en","English"]])}
-    </div>
-    <div class="grid g3" style="margin-top:10px">
-      ${fld(t("authority"), "exam.authority")}
-      ${fld(t("date"), "exam.date", "date")}
-      ${fld(t("updated"), "exam.last_updated", "date")}
-    </div>
-    <div class="grid g3" style="margin-top:10px">
-      ${fld(t("passing"), "exam.passing")}
-      ${fld(t("target"), "exam.target_score")}
-      ${fld(t("confidence"), "exam.confidence", "select", [["",t("none")],1,2,3,4,5])}
-    </div>
-    <div style="margin-top:10px">${fld(t("version"), "exam.syllabus_version")}</div>
-    <div class="grid g2" style="margin-top:10px">
-      ${fld(t("subjects"), "exam.subjects", "textarea")}
-      ${fld(t("sources"), "exam.sources", "textarea")}
-    </div>
-    <div style="margin-top:10px">${fld(t("what_tests"), "exam.what_it_tests", "textarea")}</div>`);
-
-  const bp = card("bp", t("s_blueprint"), S.exam.blueprint.length, `
-    ${S.exam.blueprint.map((b,i)=>`<div class="item">
-      <div class="ih"><span class="n">${i+1}</span><span class="t">${esc(b.domain||"")}</span>
-        <button class="sm dg" data-act="deldomain" data-i="${i}">${esc(t("del"))}</button></div>
-      <div class="grid g3">
-        ${fld(t("domain"), `exam.blueprint.${i}.domain`)}
-        ${fld(t("weight"), `exam.blueprint.${i}.weight`)}
-        ${fld(t("qtype"), `exam.blueprint.${i}.question_type`)}
-      </div>
-      <div class="grid g3" style="margin-top:8px">
-        ${fld(t("priority"), `exam.blueprint.${i}.priority`, "select", ["A","B","C"])}
-        ${fld(t("confidence"), `exam.blueprint.${i}.confidence`, "select", [["",t("none")],1,2,3,4,5])}
-        ${fld(t("last_review"), `exam.blueprint.${i}.last_review`, "date")}
-      </div></div>`).join("")}
-    <button class="sm addbtn" data-act="adddomain">+ ${esc(t("add_domain"))}</button>
-    <div class="grid g3" style="margin-top:14px">
-      ${fld(t("high_yield"), "exam.high_yield", "textarea")}
-      ${fld(t("weak"), "exam.weak", "textarea")}
-      ${fld(t("volatile"), "exam.volatile", "textarea")}
-    </div>`);
-
-  const errs = card("errors", t("s_errors"), S.error_log.length, `
-    <p class="hint">${t("hint_err")}</p>
-    ${S.error_log.map((x,i)=>{
-      const tp = S.topics.find(z=>(z.id||slug(z.title))===x.mt);
-      const rowOpts = tp ? tp.matrix.rows.map(r=>r.label).filter(Boolean) : [];
-      const colOpts = tp ? tp.matrix.columns.map(c=>[c.key,(S.exam.lang==="ko"?c.label_ko:c.label)||c.key]) : [];
+  const errs = card("errs", "틀린 문제 기록", S.error_log.length, `
+    <p class="help" style="margin-bottom:12px">틀린 문제는 <b>표의 어느 칸</b>이 틀렸는지 지목해야 합니다.
+      그래야 다음 빈칸 문제지에서 그 칸이 다시 나옵니다.</p>
+    ${S.error_log.map((x, i) => {
+      const tp = S.topics.find((z) => (z.id || slug(z.title)) === x.mt);
+      const rowOpts = tp ? tp.matrix.rows.map((r) => r.label).filter(Boolean) : [];
+      const colOpts = tp ? tp.matrix.columns.map((c) => [c.key, c.label_ko || c.label || c.key]) : [];
       return `<div class="item">
-      <div class="ih"><span class="n">${i+1}</span><span class="t">${esc(x.question||"")}</span>
-        <button class="sm dg" data-act="delerr" data-i="${i}">${esc(t("del"))}</button></div>
-      <div class="grid g3">
-        ${fld(t("l_date"), `error_log.${i}.date`, "date")}
-        ${fld(t("l_q"), `error_log.${i}.question`)}
-        ${fld(t("l_topic"), `error_log.${i}.topic`)}
-      </div>
-      <div class="grid g3" style="margin-top:8px">
-        ${fld(t("l_mine"), `error_log.${i}.mine`)}
-        ${fld(t("l_correct"), `error_log.${i}.correct`)}
-        ${fld(t("l_type"), `error_log.${i}.error_type`, "select", [["",t("none")]].concat(ETYPES.map(e=>[e,e])))}
-      </div>
-      <div style="margin-top:8px">${fld(t("l_missing"), `error_log.${i}.missing_distinction`, "textarea")}</div>
-      <div class="grid g3" style="margin-top:8px">
-        ${fld(t("l_update"), `error_log.${i}.mt`, "select", [["",t("none")]].concat(topicOpts))}
-        ${fld(t("e_row"), `error_log.${i}.mrow`, "select", [["",t("none")]].concat(rowOpts.map(r=>[r,r])))}
-        ${fld(t("e_col"), `error_log.${i}.mcol`, "select", [["",t("none")]].concat(colOpts))}
-      </div>
-      <div style="margin-top:8px;max-width:220px">${fld(t("l_retest"), `error_log.${i}.retest`, "date")}</div>
-    </div>`;}).join("")}
-    <button class="sm addbtn" data-act="adderr">+ ${esc(t("add_err"))}</button>`);
+      <div class="ih"><span class="n">${i + 1}</span><span class="t">${esc(x.question)}</span>
+        <button class="sm dg" data-act="delerr" data-i="${i}">삭제</button></div>
+      <div class="g3">${fld("날짜", `error_log.${i}.date`, "date")}${fld("문항", `error_log.${i}.question`)}
+        ${fld("주제", `error_log.${i}.topic`)}</div>
+      <div class="g3" style="margin-top:9px">${fld("내 답", `error_log.${i}.mine`)}
+        ${fld("정답", `error_log.${i}.correct`)}
+        ${fld("왜 틀렸나", `error_log.${i}.error_type`, "select",
+          [["", "—"]].concat(ETYPES.map((e) => [e, ETYPE_KO[e]])))}</div>
+      <div style="margin-top:9px">${fld("놓친 게 뭐였나", `error_log.${i}.missing_distinction`, "textarea")}</div>
+      <div class="g3" style="margin-top:9px">
+        ${fld("고칠 주제", `error_log.${i}.mt`, "select", [["", "—"]].concat(topicOpts))}
+        ${fld("어느 줄", `error_log.${i}.mrow`, "select", [["", "—"]].concat(rowOpts.map((r) => [r, r])))}
+        ${fld("어느 기준", `error_log.${i}.mcol`, "select", [["", "—"]].concat(colOpts))}</div>
+      <div style="margin-top:9px;max-width:230px">${fld("다시 풀 날", `error_log.${i}.retest`, "date")}</div>
+    </div>`; }).join("")}
+    <button class="sm" data-act="adderr">＋ 틀린 문제 추가</button>`);
 
-  const comp = card("comp", t("s_compress"), S.compression.l2.length, `
-    <h3 style="font-size:12px;margin:0 0 8px">${esc(t("l2"))}</h3>
-    ${S.compression.l2.map((x,i)=>`<div class="item">
-      <div class="ih"><span class="n">${i+1}</span><span class="t">${esc(x.item||"")}</span>
-        <button class="sm dg" data-act="dell2" data-i="${i}">${esc(t("del"))}</button></div>
-      <div class="grid g3">
-        ${fld(t("l2item"), `compression.l2.${i}.item`)}
-        ${fld(t("l2detail"), `compression.l2.${i}.detail`)}
-        ${fld("mark", `compression.l2.${i}.mark`, "select", [["",t("none")]].concat(MARKS.map(m=>[m,m])))}
-      </div></div>`).join("")}
-    <button class="sm addbtn" data-act="addl2">+ ${esc(t("add_l2"))}</button>
-    <div style="margin-top:14px">${fld(t("l3"), "compression.l3", "textarea")}</div>`);
+  const comp = card("comp", "시험 전 압축", S.compression.l2.length, `
+    <h3 class="sh" style="margin-top:0">시험 전날 볼 것</h3>
+    ${S.compression.l2.map((x, i) => `<div class="item">
+      <div class="ih"><span class="n">${i + 1}</span><span class="t">${esc(x.item)}</span>
+        <button class="sm dg" data-act="dell2" data-i="${i}">삭제</button></div>
+      <div class="g3">${fld("항목", `compression.l2.${i}.item`)}${fld("한 줄 요약", `compression.l2.${i}.detail`)}
+        ${fld("표시", `compression.l2.${i}.mark`, "select",
+          [["", "—"]].concat(ALL_MARKS.map((m) => [m, MARK_KO[m]])))}</div></div>`).join("")}
+    <button class="sm" data-act="addl2">＋ 항목 추가</button>
+    <div style="margin-top:14px">${fld("마지막 10분에 볼 것 (줄바꿈으로 한 줄씩)", "compression.l3", "textarea")}</div>`);
 
-  document.getElementById("app").innerHTML =
-    exam + bp +
-    `<h2 style="font-size:13px;margin:18px 0 9px;letter-spacing:.02em">${esc(t("s_topics"))}</h2>` +
-    S.topics.map(topicCard).join("") +
-    `<button class="addbtn" data-act="addtopic" style="margin-bottom:16px">+ ${esc(t("add_topic"))}</button>` +
+  return exam + bp +
+    `<h2 style="font-size:16px;margin:20px 0 10px">주제</h2>` +
+    S.topics.map(fullTopicCard).join("") +
+    `<button class="addb" data-act="addtopic" style="margin-bottom:16px">＋ 주제 추가</button>` +
     errs + comp;
-
-  document.getElementById("yamlOut").textContent = buildYaml();
 }
 
-/* ----------------------------------------------------------------- events */
+/* --------------------------------------------------------------- rendering */
 
-document.getElementById("app").addEventListener("input", (ev)=>{
+function renderSteps() {
+  const el = document.getElementById("steps");
+  if (S.ui.mode === "full") { el.style.display = "none"; return; }
+  el.style.display = "";
+  el.innerHTML = STEPS.map((s, i) => {
+    const cls = i === S.ui.step ? "now" : (i < S.ui.step ? "done" : "");
+    return `<button class="st ${cls}" data-act="step" data-i="${i}">
+      <span class="num">${i < S.ui.step ? "✓" : i}</span>${esc(s)}</button>`;
+  }).join("");
+}
+
+function render() {
+  document.getElementById("mEasy").classList.toggle("on", S.ui.mode === "easy");
+  document.getElementById("mFull").classList.toggle("on", S.ui.mode === "full");
+  const main = document.getElementById("app");
+  main.classList.toggle("wide", S.ui.mode === "full" || S.ui.step === 4);
+  renderSteps();
+  main.innerHTML = S.ui.mode === "full" ? renderFull() : screens[S.ui.step]();
+  const showTools = S.ui.mode === "full" || S.ui.step >= 4;
+  document.getElementById("btnPdf").style.display = showTools ? "" : "none";
+  document.getElementById("btnPrev").style.display = showTools ? "" : "none";
+  document.getElementById("btnYaml").style.display = showTools ? "" : "none";
+  window.scrollTo({ top: 0, behavior: "instant" });
+}
+
+/* ------------------------------------------------------------------ events */
+
+document.getElementById("app").addEventListener("input", (ev) => {
   const el = ev.target;
-  if(el.dataset.p){ set(el.dataset.p, el.value); save();
-    document.getElementById("yamlOut").textContent = buildYaml();
-    if(/topics\.\d+\.title|exam\.name/.test(el.dataset.p)) softLabels();
-    return; }
-  if(el.dataset.cell){
-    const [ti,ri,key] = el.dataset.cell.split(".");
-    S.topics[ti].matrix.rows[ri].cells[key].v = el.value;
-    save(); document.getElementById("yamlOut").textContent = buildYaml(); return;
+  if (el.dataset.p) {
+    set(el.dataset.p, el.value); save(); syncGate();
+    return;
+  }
+  if (el.dataset.cell) {
+    const [ti, ri, key] = el.dataset.cell.split(".");
+    S.topics[ti].matrix.rows[ri].cells[key].v = el.value; save();
   }
 });
-document.getElementById("app").addEventListener("change", (ev)=>{
+document.getElementById("app").addEventListener("change", (ev) => {
   const el = ev.target;
-  if(el.dataset.cellmark){
-    const [ti,ri,key] = el.dataset.cellmark.split(".");
-    S.topics[ti].matrix.rows[ri].cells[key].mark = el.value;
-    render(); save(); return;
-  }
-  if(el.dataset.p && (/\.mark$|archetype$|exam\.lang$/.test(el.dataset.p))){
-    if(/archetype$/.test(el.dataset.p)){
-      const ti = Number(el.dataset.p.split(".")[1]);
-      const a = ARCH[el.value];
-      const tp = S.topics[ti];
-      // Only replace the axes when the learner has not written any yet.
-      const untouched = tp.matrix.rows.every(r=>Object.values(r.cells||{}).every(c=>!String(c.v||"").trim()));
-      if(untouched){
-        tp.matrix.columns = a.cols.slice(0,5).map(([k,ko,en,mk])=>({key:k,label_ko:ko,label:en,mark:mk}));
-        tp.matrix.rows.forEach(r=>{ r.cells={}; });
-        if(!tp.matrix.row_label) tp.matrix.row_label = a.row[S.exam.lang==="ko"?"ko":"en"];
-      }
-    }
-    render(); save(); return;
-  }
+  if (el.dataset.p && /archetype$|exam\.lang$|\.mark$/.test(el.dataset.p)) { render(); save(); }
 });
-document.getElementById("app").addEventListener("click", (ev)=>{
+
+document.getElementById("app").addEventListener("click", (ev) => {
   const tg = ev.target.closest("[data-toggle]");
-  if(tg){ const id=tg.dataset.toggle; S.open[id] = S.open[id]===false; render(); save(); return; }
-  const b = ev.target.closest("[data-act]");
-  if(!b) return;
-  const a = b.dataset.act, ti = Number(b.dataset.t), i = Number(b.dataset.i);
-  const tp = S.topics[ti];
-  if(a==="addtopic") S.topics.push(blankTopic(S.topics.at(-1)?.archetype || "concept"));
-  if(a==="deltopic" && confirm(t("confirm_clear"))) S.topics.splice(ti,1);
-  if(a==="addrow") tp.matrix.rows.push({label:"",sub:"",cells:{}});
-  if(a==="delrow") tp.matrix.rows.splice(Number(b.dataset.r),1);
-  if(a==="addcol"){
-    let n = tp.matrix.columns.length+1, key = "col"+n;
-    while(tp.matrix.columns.some(c=>c.key===key)) key = "col"+(++n);
-    tp.matrix.columns.push({key,label:"",label_ko:"",mark:"core"});
+  if (tg) { const id = tg.dataset.toggle; S.open[id] = S.open[id] === false; render(); save(); return; }
+  const b = ev.target.closest("[data-act], [data-cyc]");
+  if (!b) return;
+
+  if (b.dataset.cyc) {
+    const [ti, ri, key] = b.dataset.cyc.split(".");
+    const cell = S.topics[ti].matrix.rows[ri].cells[key];
+    const i = MARK_CYCLE.indexOf(cell.mark || "core");
+    cell.mark = MARK_CYCLE[(i + 1) % MARK_CYCLE.length];
+    render(); save(); return;
   }
-  if(a==="delcol") tp.matrix.columns.splice(Number(b.dataset.c),1);
-  if(a==="addpair") tp.decisive.pairs.push({a:"",b:"",why:"",clue:""});
-  if(a==="delpair") tp.decisive.pairs.splice(i,1);
-  if(a==="addtrap") tp.traps.push({cue:"",usually:"",exception:"",why:"",source:""});
-  if(a==="deltrap") tp.traps.splice(i,1);
-  if(a==="addev") tp.evidence.push({row:"",column:"",source:"",exam:"",question:"",tested_as:"",risk:""});
-  if(a==="delev") tp.evidence.splice(i,1);
-  if(a==="adddomain") S.exam.blueprint.push({domain:"",weight:"",question_type:"",priority:"A",confidence:"",last_review:""});
-  if(a==="deldomain") S.exam.blueprint.splice(i,1);
-  if(a==="adderr") S.error_log.push({date:"",question:"",topic:"",mine:"",correct:"",error_type:"",
-    missing_distinction:"",mt:"",mrow:"",mcol:"",retest:""});
-  if(a==="delerr") S.error_log.splice(i,1);
-  if(a==="addl2") S.compression.l2.push({item:"",detail:"",mark:""});
-  if(a==="dell2") S.compression.l2.splice(i,1);
-  if(!S.topics.length) S.topics=[blankTopic()];
+
+  const a = b.dataset.act;
+  const i = Number(b.dataset.i);
+  const ti = b.dataset.t !== undefined ? Number(b.dataset.t) : S.ui.topic;
+  const tp = S.topics[ti];
+
+  switch (a) {
+    case "start":     S.topics = [blankTopic()]; S.ui.topic = 0; S.ui.step = 1; break;
+    case "sample":    S = sampleState(); break;
+    case "loadfile":  document.getElementById("fileIn").click(); return;
+    case "next":      S.ui.step = Math.min(5, S.ui.step + 1); break;
+    case "back":      S.ui.step = Math.max(0, S.ui.step - 1); break;
+    case "step":      S.ui.step = i; break;
+    case "mode":      S.ui.mode = b.dataset.v; break;
+    case "addrow":    ensureTopic().matrix.rows.push({ label: "", sub: "", cells: {} }); break;
+    case "delrow":    ensureTopic().matrix.rows.splice(i, 1); break;
+    case "addcol":    addColumn(ensureTopic(), ""); break;
+    case "quickcol":  addColumn(ensureTopic(), b.dataset.v); break;
+    case "delcol": {
+      const t = ensureTopic();
+      const [gone] = t.matrix.columns.splice(i, 1);
+      t.matrix.rows.forEach((r) => { if (gone) delete r.cells[gone.key]; });
+      break;
+    }
+    case "preset": {
+      const p = PRESETS.find((x) => x.id === b.dataset.id);
+      const t = ensureTopic();
+      const written = t.matrix.rows.some((r) =>
+        Object.values(r.cells || {}).some((c) => String(c.v || "").trim()));
+      if (written && !confirm("이미 채운 칸이 있습니다. 기준을 바꾸면 지워집니다. 계속할까요?")) return;
+      t.archetype = p.id;
+      t.matrix.columns = [];
+      t.matrix.rows.forEach((r) => { r.cells = {}; });
+      p.cols.forEach((c) => addColumn(t, c));
+      break;
+    }
+    case "pdf":       printEdition(b.dataset.ed); return;
+    case "prev":      preview(b.dataset.ed || "full"); return;
+    case "addtopic":  S.topics.push(blankTopic()); S.ui.topic = S.topics.length - 1; S.ui.step = 2; break;
+    case "edittopic": S.ui.topic = i; S.ui.step = 4; S.ui.mode = "easy"; break;
+    case "deltopic":
+      if (!confirm("이 주제를 지울까요?")) return;
+      S.topics.splice(i, 1);
+      if (!S.topics.length) S.topics = [blankTopic()];
+      S.ui.topic = 0;
+      break;
+    case "addpair":   tp.decisive.pairs.push({ a: "", b: "", why: "", clue: "" }); break;
+    case "delpair":   tp.decisive.pairs.splice(i, 1); break;
+    case "addtrap":   tp.traps.push({ cue: "", usually: "", exception: "", why: "", source: "" }); break;
+    case "deltrap":   tp.traps.splice(i, 1); break;
+    case "addev":     tp.evidence.push({ row: "", column: "", source: "", exam: "", question: "", tested_as: "", risk: "" }); break;
+    case "delev":     tp.evidence.splice(i, 1); break;
+    case "adddomain": S.exam.blueprint.push({ domain: "", weight: "", question_type: "", priority: "A", confidence: "", last_review: "" }); break;
+    case "deldomain": S.exam.blueprint.splice(i, 1); break;
+    case "adderr":    S.error_log.push({ date: "", question: "", topic: "", mine: "", correct: "", error_type: "", missing_distinction: "", mt: "", mrow: "", mcol: "", retest: "" }); break;
+    case "delerr":    S.error_log.splice(i, 1); break;
+    case "addl2":     S.compression.l2.push({ item: "", detail: "", mark: "" }); break;
+    case "dell2":     S.compression.l2.splice(i, 1); break;
+    default: return;
+  }
   render(); save();
 });
 
-/** Cheap partial update so typing a title does not rebuild the whole DOM. */
-function softLabels(){
-  document.getElementById("subtitle").textContent = S.exam.name || "";
-  document.querySelectorAll("[data-card^=topic]").forEach((el)=>{
-    const ti = Number(el.dataset.card.replace("topic",""));
-    const h = el.querySelector("h2");
-    if(h && S.topics[ti]) h.childNodes[0].nodeValue =
-      `${String(ti+1).padStart(2,"0")} · ${S.topics[ti].title || t("s_topics")}`;
-  });
-}
-
-document.getElementById("btnLang").onclick = ()=>{
-  UI = UI==="ko" ? "en" : "ko"; localStorage.setItem("em.ui", UI); render();
+document.getElementById("mEasy").onclick = () => { S.ui.mode = "easy"; render(); save(); };
+document.getElementById("mFull").onclick = () => {
+  if (!S.topics.length) S.topics = [blankTopic()];
+  S.ui.mode = "full"; render(); save();
 };
-document.getElementById("btnYaml").onclick = ()=>{
-  const p = document.getElementById("yamlPane");
-  p.classList.toggle("hidden");
-  document.getElementById("btnYaml").textContent = p.classList.contains("hidden") ? t("showyaml") : t("hideyaml");
-};
-document.getElementById("btnYamlClose").onclick = ()=>{
-  document.getElementById("yamlPane").classList.add("hidden");
-  document.getElementById("btnYaml").textContent = t("showyaml");
-};
-document.getElementById("btnDl").onclick = ()=>{
-  const name = (slug(S.exam.name) || "exam") + ".yaml";
-  const blob = new Blob([buildYaml()], {type:"text/yaml;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob); a.download = name; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
-};
-document.getElementById("btnCopy").onclick = async ()=>{
-  try{ await navigator.clipboard.writeText(buildYaml()); flash(t("copied")); }
-  catch(e){ document.getElementById("yamlPane").classList.remove("hidden"); }
-};
-document.getElementById("btnLoad").onclick = ()=>document.getElementById("fileIn").click();
-document.getElementById("fileIn").onchange = (ev)=>{
-  const f = ev.target.files[0]; if(!f) return;
+document.getElementById("btnLoad").onclick = () => document.getElementById("fileIn").click();
+document.getElementById("fileIn").onchange = (ev) => {
+  const f = ev.target.files[0]; if (!f) return;
   const r = new FileReader();
-  r.onload = ()=>{ try{ importYaml(String(r.result)); flash(t("loaded")); }
-    catch(err){ alert("YAML: " + err.message); } };
+  r.onload = () => { try { importYaml(String(r.result)); flash("불러왔습니다"); }
+    catch (err) { alert("파일을 읽지 못했습니다:\n" + err.message); } };
   r.readAsText(f, "utf-8");
   ev.target.value = "";
 };
-document.getElementById("btnClear").onclick = ()=>{
-  if(confirm(t("confirm_clear"))){ S = blankState(); render(); save(); }
+document.getElementById("btnPdf").onclick = () => {
+  if (S.ui.mode === "easy" && S.ui.step < 5) { S.ui.step = 5; render(); save(); }
+  else printEdition("full");
 };
-document.getElementById("btnSample").onclick = ()=>{ S = sampleState(); render(); save(); };
+document.getElementById("btnPrev").onclick = () => preview("full");
+document.getElementById("btnYaml").onclick = () => downloadYaml();
+document.getElementById("modalClose").onclick = () => document.getElementById("modal").classList.add("hide");
 
-function sampleState(){
+/* -------------------------------------------------------------- 예시 데이터 */
+
+function sampleState() {
   const s = blankState();
   s.exam.name = "정보처리기사 필기";
-  s.exam.lang = "ko";
-  s.exam.authority = "한국산업인력공단";
-  s.exam.subjects = "소프트웨어 설계\n데이터베이스 구축";
-  s.exam.what_it_tests = "용어의 뜻이 아니라 유사 기술 사이의 선택 근거를 아는지\n장점만 외운 수험생이 한계를 묻는 선지에서 걸리는지";
-  const tp = blankTopic("it");
+  s.exam.subjects = "정보시스템 구축관리";
+  const tp = blankTopic();
   tp.id = "tcp-udp"; tp.title = "TCP vs UDP"; tp.importance = "A";
-  tp.key_axis = "연결 설정 여부 → 신뢰성 · 순서 · 오버헤드";
-  tp.one_sentence = "TCP는 연결을 먼저 맺고 확인응답과 재전송으로 신뢰성과 순서를 보장하는 대신 오버헤드가 크고, UDP는 연결 없이 그냥 보내서 빠른 대신 아무것도 보장하지 않는다.";
-  tp.essentials = ["TCP 헤더는 20바이트, UDP 헤더는 8바이트다.","순서 보장은 TCP만 한다.",
-    "연결은 3-way, 종료는 4-way handshake.","UDP도 체크섬은 있다.","흐름·혼잡 제어는 TCP만 수행한다."];
+  tp.key_axis = "연결을 먼저 맺는가";
+  tp.one_sentence = "TCP는 연결을 먼저 맺고 확인응답과 재전송으로 신뢰성과 순서를 보장하는 대신 느리고, UDP는 연결 없이 그냥 보내서 빠른 대신 아무것도 보장하지 않는다.";
+  tp.essentials = ["TCP 헤더는 20바이트, UDP는 8바이트다.", "순서 보장은 TCP만 한다.",
+    "연결은 3-way, 종료는 4-way handshake.", "UDP도 체크섬은 있다.", "흐름·혼잡 제어는 TCP만 한다."];
   tp.matrix.row_label = "프로토콜";
   tp.matrix.columns = [
-    {key:"conn",label_ko:"연결 방식",label:"Connection",mark:"distinction"},
-    {key:"reliable",label_ko:"신뢰성",label:"Reliability",mark:"distinction"},
-    {key:"header",label_ko:"헤더 크기",label:"Header size",mark:"trap"},
-    {key:"usecase",label_ko:"사용 예",label:"Use cases",mark:"core"},
+    { key: "c1", label_ko: "연결 방식", label: "", mark: "distinction" },
+    { key: "c2", label_ko: "신뢰성", label: "", mark: "distinction" },
+    { key: "c3", label_ko: "헤더 크기", label: "", mark: "trap" },
+    { key: "c4", label_ko: "쓰는 곳", label: "", mark: "core" },
   ];
   tp.matrix.rows = [
-    {label:"TCP",sub:"Transmission Control Protocol",cells:{
-      conn:{v:"연결형 — 3-way handshake",mark:"distinction"},
-      reliable:{v:"확인응답(ACK) + 재전송으로 보장",mark:"distinction"},
-      header:{v:"20바이트 (옵션 제외)",mark:"trap"},
-      usecase:{v:"HTTP, FTP, SMTP, SSH",mark:"core"}}},
-    {label:"UDP",sub:"User Datagram Protocol",cells:{
-      conn:{v:"비연결형 — handshake 없음",mark:"distinction"},
-      reliable:{v:"보장하지 않음 (재전송 없음)",mark:"distinction"},
-      header:{v:"8바이트",mark:"trap"},
-      usecase:{v:"DNS, DHCP, 스트리밍, VoIP",mark:"core"}}},
+    { label: "TCP", sub: "", cells: {
+      c1: { v: "연결형 — 3-way handshake", mark: "distinction" },
+      c2: { v: "확인응답(ACK) + 재전송으로 보장", mark: "distinction" },
+      c3: { v: "20바이트", mark: "trap" },
+      c4: { v: "웹, 파일 전송, 메일", mark: "core" } } },
+    { label: "UDP", sub: "", cells: {
+      c1: { v: "비연결형 — handshake 없음", mark: "distinction" },
+      c2: { v: "보장 안 함 (재전송 없음)", mark: "distinction" },
+      c3: { v: "8바이트", mark: "trap" },
+      c4: { v: "영상 스트리밍, 게임, DNS", mark: "core" } } },
   ];
-  tp.decisive.answer = "데이터를 보내기 전에 연결을 맺는가. 맺으면 상태를 유지할 수 있으므로 확인응답·재전송·순서·흐름 제어가 전부 가능해진다.";
-  tp.decisive.pairs = [{a:"TCP 헤더 20바이트",b:"UDP 헤더 8바이트",
-    why:"둘 다 짝수 바이트라 숫자만 외우면 뒤바뀐다.",clue:"기능이 많은 쪽이 헤더가 크다 — TCP가 20."}];
-  tp.traps = [{cue:"UDP는 오류 검출 기능이 없다.",usually:"거짓",
-    exception:"UDP 헤더에도 체크섬 필드가 있어 오류 검출은 수행한다",
-    why:"신뢰성이 없다는 사실을 오류 검출이 없다는 말로 확장해 버린다.",source:"RFC 768"}];
+  tp.decisive.answer = "데이터를 보내기 전에 연결을 맺는가. 맺으면 확인응답·재전송·순서 보장이 전부 가능해지고, 안 맺으면 전부 불가능하다.";
+  tp.decisive.pairs = [{ a: "TCP 헤더 20바이트", b: "UDP 헤더 8바이트",
+    why: "둘 다 짝수라 숫자만 외우면 뒤바뀐다.", clue: "기능이 많은 쪽이 크다 — TCP가 20." }];
+  tp.traps = [{ cue: "UDP는 오류 검출 기능이 없다.", usually: "거짓",
+    exception: "UDP 헤더에도 체크섬이 있어 오류 검출은 한다",
+    why: "신뢰성이 없다는 걸 오류 검출이 없다는 말로 넓혀 버린다.", source: "RFC 768" }];
   s.topics = [tp];
+  s.ui = { step: 5, mode: "easy", topic: 0 };
   return s;
 }
 
+/* 저장된 작업이 있으면 완성 화면부터 — 다시 열었을 때 바로 인쇄할 수 있게. */
+if (S.topics.length && (S.exam.name || S.topics[0].title) && S.ui.step === 0) S.ui.step = 5;
 render();
 </script>
 </body>

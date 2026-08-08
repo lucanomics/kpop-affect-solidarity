@@ -7,7 +7,7 @@
  * never the variable.
  */
 
-import { visualLen } from './model.js';
+import { visualLen } from './text.js';
 
 /** Millimetres. Derived from the @page margins in src/styles.css. */
 const GEOM = {

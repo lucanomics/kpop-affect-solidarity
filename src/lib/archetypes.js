@@ -14,8 +14,8 @@
 
 /** Semantic markers. Redundantly encoded: label + border + tint (never colour alone). */
 export const MARKERS = {
-  core: { code: 'CORE', label_ko: '핵심', sigil: '' },
-  distinction: { code: 'DIST', label_ko: '변별', sigil: '◆' },
+  core: { code: 'CORE', label_ko: '기본', sigil: '' },
+  distinction: { code: 'DIST', label_ko: '갈림', sigil: '◆' },
   exception: { code: 'EXC', label_ko: '예외', sigil: '▲' },
   trap: { code: 'TRAP', label_ko: '함정', sigil: '■' },
   update: { code: 'UPD', label_ko: '개정', sigil: '↻' },

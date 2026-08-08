@@ -3,8 +3,6 @@
  * about YAML, and nothing in lib/ knows about markup.
  */
 
-import fs from 'node:fs';
-import path from 'node:path';
 import { MARKERS } from './lib/archetypes.js';
 import { planMatrix, columnWidths } from './lib/layout.js';
 import { DIFFICULTY_GLYPH } from './lib/recall.js';
@@ -67,6 +65,13 @@ const T = {
     key_title: 'Answer Key', key_hint: 'Recall Edition — check only after you have written every cell.',
     legend: 'Markers',
     own_detail: 'Detail I added myself',
+    howto: 'How to use these three files',
+    howto_steps: [
+      'Read the <b>Full</b> edition once. Do not memorise — just see what separates the rows.',
+      'Do the <b>Recall</b> edition by hand. Write in the blanks without looking.',
+      'Check against the <b>Answer key</b>. Circle what you got wrong.',
+      'Fix the matrix cell you got wrong, rebuild, and the next Recall edition tests it again.',
+    ],
     notation: 'How to read a cell',
     notation_hint: 'Markers are encoded three ways — label, border, tint — so nothing is lost in grayscale.',
     n_marker: 'Marker', n_means: 'Means', n_do: 'What to do with it',
@@ -142,6 +147,13 @@ const T = {
     key_title: '정답지', key_hint: '인출 훈련판용 — 모든 칸을 쓴 뒤에만 확인할 것.',
     legend: '표기',
     own_detail: '직접 추가한 디테일',
+    howto: '이 세 가지를 이렇게 쓰세요',
+    howto_steps: [
+      '<b>전체본</b>을 한 번 읽는다. 외우려 하지 말고, 무엇이 다른지만 본다.',
+      '<b>빈칸 문제지</b>를 손으로 채운다. 답을 보지 않고 쓴다.',
+      '<b>정답지</b>로 채점한다. 틀린 것에 동그라미.',
+      '틀린 칸을 고쳐서 다시 만든다. 다음 빈칸 문제지에 그 칸이 또 나온다.',
+    ],
     notation: '셀 읽는 법',
     notation_hint: '표기는 라벨 · 테두리 · 음영 세 가지로 중복 인코딩되어 흑백 인쇄에서도 유지된다.',
     n_marker: '표기', n_means: '의미', n_do: '무엇을 할 것인가',
@@ -173,6 +185,28 @@ const T = {
 };
 
 const CYCLE = ['LEARN', 'STRUCTURE', 'COMPARE', 'RETRIEVE', 'APPLY', 'CORRECT', 'COMPRESS'];
+
+/**
+ * Which markers this document actually uses. The legend teaches six of them,
+ * which is a vocabulary test rather than a key when the learner has only used
+ * two — so the table is filtered to what is genuinely on the page.
+ */
+/** Marker label in the document's own language — "갈림", not "DIST". */
+function markLabel(k, t) {
+  return t === T.ko ? MARKERS[k].label_ko : MARKERS[k].code;
+}
+
+function usedMarkers(model) {
+  const used = new Set(['core']);
+  for (const tp of model.topics) {
+    tp.matrix.columns.forEach((c) => used.add(c.mark || 'core'));
+    tp.matrix.rows.forEach((r) => r.cells.forEach((c) => used.add(c.mark || 'core')));
+    if (tp.traps.length) used.add('trap');
+    if (tp.evidence.length) used.add('evidence');
+  }
+  for (const i of model.compression?.l2 ?? []) if (i.mark) used.add(i.mark);
+  return Object.keys(MARKERS).filter((k) => used.has(k));
+}
 
 /* ------------------------------------------------------------------ utils */
 
@@ -230,9 +264,11 @@ function head(t, { eyebrow, title, sub, rhs }) {
   </header>`;
 }
 
-function legend(t) {
-  return `<div class="legend">${Object.entries(MARKERS).map(([k, m]) =>
-    `<span><b>${m.code}</b> ${m.sigil ? m.sigil + ' ' : ''}${esc(t === T.ko ? m.label_ko : k)}</span>`
+function legend(t, model) {
+  const keys = model ? usedMarkers(model) : Object.keys(MARKERS);
+  return `<div class="legend">${keys.map((k) =>
+    `<span>${MARKERS[k].sigil ? MARKERS[k].sigil + ' ' : ''}<b>${esc(markLabel(k, t))}</b>` +
+    `${t === T.ko ? '' : ' ' + esc(MARKERS[k].label_ko)}</span>`
   ).join('')}</div>`;
 }
 
@@ -241,45 +277,62 @@ function legend(t) {
 function pageDashboard(model, t, edLabel) {
   const e = model.exam;
   const dd = e.days_remaining;
+
+  // Print what the learner actually filled in. A dashboard of em-dashes is the
+  // fastest way to make a first-time user think they did it wrong, so every
+  // block here is omitted rather than stubbed when it has no content.
+  const metaCells = [
+    e.date        && `<div><dt>${t.exam_date}</dt><dd class="big">${esc(e.date)}</dd></div>`,
+    dd !== null   && `<div><dt>${t.days_left}</dt><dd class="big">${dd >= 0 ? `D-${dd}` : `D+${-dd}`}</dd></div>`,
+    e.target_score && `<div><dt>${t.target}</dt><dd class="big">${esc(e.target_score)}</dd></div>`,
+    e.passing     && `<div><dt>${t.passing}</dt><dd>${esc(e.passing)}</dd></div>`,
+    e.syllabus_version && `<div><dt>${t.syllabus}</dt><dd>${esc(e.syllabus_version)}</dd></div>`,
+    e.confidence  && `<div><dt>${t.confidence}</dt><dd>${confDots(e.confidence)}</dd></div>`,
+  ].filter(Boolean);
+
+  const subjects = (e.subjects ?? []).length, sources = (e.sources ?? []).length;
+  const tests = (e.what_it_tests ?? []).length;
+  // The cycle strip is orientation for someone running the whole method. On a
+  // first, single-topic note it is just vocabulary the learner did not ask for.
+  const showCycle = model.topics.length > 1
+    || (model.compression?.l2?.length ?? 0) > 0
+    || model.error_log.length > 0;
+
   return `<section class="page">
   ${head(t, {
     eyebrow: `${t.brand} · ${t.notes}`,
     title: e.name,
     sub: [e.name_sub, e.authority].filter(Boolean).join(' · '),
-    rhs: `<div><b>${esc(edLabel)}</b></div><div>${t.updated}: ${esc(e.last_updated ?? '—')}</div>`,
+    rhs: `<div><b>${esc(edLabel)}</b></div>${e.last_updated ? `<div>${t.updated}: ${esc(e.last_updated)}</div>` : ''}`,
   })}
 
-  <div class="meta block">
-    <div><dt>${t.exam_date}</dt><dd class="big">${esc(e.date ?? '—')}</dd></div>
-    <div><dt>${t.days_left}</dt><dd class="big">${dd === null ? '—' : (dd >= 0 ? `D-${dd}` : `D+${-dd}`)}</dd></div>
-    <div><dt>${t.target}</dt><dd class="big">${esc(e.target_score ?? '—')}</dd></div>
-    <div><dt>${t.passing}</dt><dd>${esc(e.passing ?? '—')}</dd></div>
-    <div><dt>${t.syllabus}</dt><dd>${esc(e.syllabus_version ?? '—')}</dd></div>
-    <div><dt>${t.confidence}</dt><dd>${confDots(e.confidence)}</dd></div>
-  </div>
+  ${metaCells.length ? `<div class="meta block">${metaCells.join('')}</div>` : ''}
 
-  <h2 class="section">${t.what_tests}</h2>
-  <div class="block">${list(e.what_it_tests)}</div>
+  ${tests ? `<h2 class="section">${t.what_tests}</h2>
+  <div class="block">${list(e.what_it_tests)}</div>` : ''}
 
-  <div class="meta two block">
-    <div><dt>${t.subjects}</dt><dd>${list(e.subjects)}</dd></div>
-    <div><dt>${t.sources}</dt><dd>${list(e.sources)}</dd></div>
-  </div>
+  ${(subjects || sources) ? `<div class="meta two block">
+    ${subjects ? `<div><dt>${t.subjects}</dt><dd>${list(e.subjects)}</dd></div>` : ''}
+    ${sources ? `<div><dt>${t.sources}</dt><dd>${list(e.sources)}</dd></div>` : ''}
+  </div>` : ''}
 
-  <h2 class="section">${t.cycle}</h2>
+  ${showCycle ? '' : `<h2 class="section">${t.howto}</h2>
+  <ol class="howto block">${t.howto_steps.map((x) => `<li>${x}</li>`).join('')}</ol>`}
+
+  ${showCycle ? `<h2 class="section">${t.cycle}</h2>
   <div class="block" style="display:flex;gap:1.5mm;font-family:var(--font-mono);font-size:7pt;letter-spacing:.06em">
     ${CYCLE.map((c, i) => `<span style="flex:1;text-align:center;padding:1.8mm .5mm;border:.6pt solid var(--rule);${i === 5 ? 'border-width:1.4pt;border-color:var(--ink)' : ''}">${c}</span>`).join('<span style="align-self:center;color:var(--muted)">›</span>')}
   </div>
   <p class="note">${esc(t === T.ko
     ? 'CORRECT 단계가 이 시스템의 핵심이다. 오답은 매트릭스의 특정 셀을 수정하며, 그 셀은 다음 인출 훈련에서 다시 출제된다.'
-    : 'CORRECT is the load-bearing step. A wrong answer edits a named matrix cell, and that cell comes back in the next recall pass.')}</p>
+    : 'CORRECT is the load-bearing step. A wrong answer edits a named matrix cell, and that cell comes back in the next recall pass.')}</p>` : ''}
 
   <h2 class="section">${t.notation}<span class="hint">${t.notation_hint}</span></h2>
   <table class="block">
     <thead><tr><th style="width:16%">${t.n_marker}</th><th style="width:34%">${t.n_means}</th>
       <th>${t.n_do}</th></tr></thead>
-    <tbody>${Object.entries(MARKERS).map(([k, m]) => `<tr>
-      <td class="m-${k}"><span class="chip">${m.sigil} ${m.code}</span></td>
+    <tbody>${usedMarkers(model).map((k) => `<tr>
+      <td class="m-${k}"><span class="chip">${MARKERS[k].sigil} ${esc(markLabel(k, t))}</span></td>
       <td>${esc(t.marker_means[k])}</td>
       <td>${esc(t.marker_do[k])}</td>
     </tr>`).join('')}</tbody>
@@ -290,6 +343,10 @@ function pageDashboard(model, t, edLabel) {
 function pageBlueprint(model, t) {
   const e = model.exam;
   const bp = e.blueprint ?? [];
+  const lists = (e.high_yield ?? []).length + (e.weak ?? []).length + (e.volatile ?? []).length;
+  // Nothing to plan and only one topic to index — the page would be a header
+  // over three empty boxes, so it is not printed at all.
+  if (!bp.length && !lists && model.topics.length < 2) return '';
   return `<section class="page">
   ${head(t, { eyebrow: t.brand, title: t.blueprint, sub: e.name })}
 
@@ -309,11 +366,11 @@ function pageBlueprint(model, t) {
     </tr>`).join('')}</tbody>
   </table>` : ''}
 
-  <div class="meta block">
+  ${lists ? `<div class="meta block">
     <div><dt>${t.high_yield}</dt><dd>${list(e.high_yield)}</dd></div>
     <div><dt>${t.weak}</dt><dd>${list(e.weak)}</dd></div>
     <div><dt>${t.volatile}</dt><dd>${list(e.volatile)}</dd></div>
-  </div>
+  </div>` : ''}
 
   <h2 class="section">${t.topic_index}</h2>
   <table class="toc block">
@@ -378,7 +435,7 @@ function matrixTable(tp, chunk, plan, t, edition) {
 
   const headCells = chunk.columns.map((c) => {
     const m = MARKERS[c.mark];
-    const chip = c.mark && c.mark !== 'core' ? `<span class="chip">${m.sigil} ${m.code}</span><br>` : '';
+    const chip = c.mark && c.mark !== 'core' ? `<span class="chip">${m.sigil} ${esc(markLabel(c.mark, t))}</span><br>` : '';
     return `<th>${chip}${esc(c.label)}</th>`;
   }).join('');
 
@@ -420,7 +477,7 @@ function pagesMatrix(tp, model, t, edition) {
       rhs: `<div>${esc(tp.archetypeLabel)}</div><div>${tp.matrix.rows.length} × ${tp.matrix.columns.length}</div>`,
     }) : ''}
     ${matrixTable(tp, chunk, plan, t, edition)}
-    ${legend(t)}
+    ${legend(t, model)}
     ${own ? `<div class="own"><div class="lbl">${t.own_detail}</div>
       <div class="lines" style="min-height:${ownH}mm"></div></div>` : ''}
   </section>`;
@@ -544,7 +601,7 @@ function pageCompression(model, t) {
   ${l2.length ? `<table class="block"><thead><tr>
       <th class="nowrap" style="width:12%">${t.legend}</th><th style="width:32%">${t.topic}</th><th>${t.p_clue}</th>
     </tr></thead><tbody>${l2.map((i) => `<tr style="height:10mm">
-      <td>${i.mark ? `<span class="chip">${MARKERS[i.mark].sigil} ${MARKERS[i.mark].code}</span>` : ''}</td>
+      <td>${i.mark ? `<span class="chip">${MARKERS[i.mark].sigil} ${esc(markLabel(i.mark, t))}</span>` : ''}</td>
       <td class="${i.mark ? `m-${i.mark}` : ''}"><b>${esc(i.item)}</b></td>
       <td>${esc(i.detail ?? '')}</td></tr>`).join('')}</tbody></table>`
     : '<div class="lines tall block"></div>'}
@@ -596,9 +653,8 @@ function pagesAnswerKey(model, t) {
 
 /* ------------------------------------------------------------------ export */
 
-export function renderDocument(model, edition) {
+export function renderDocument(model, edition, css) {
   const t = T[model.lang] ?? T.en;
-  const css = fs.readFileSync(path.join(process.cwd(), 'src', 'styles.css'), 'utf8');
   const edLabel = { full: t.ed_full, recall: t.ed_recall, key: t.ed_key }[edition];
 
   let pages;

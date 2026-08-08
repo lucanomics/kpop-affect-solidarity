@@ -1,4 +1,30 @@
-# Exam Matrix
+# Exam Matrix · 시험표 만들기
+
+**헷갈리는 걸 표로 만들면, 시험지가 나옵니다.**
+
+헷갈리는 것 둘을 나란히 놓고 뭐가 다른지 칸을 채우면 —
+**전체본 · 빈칸 문제지 · 정답지** 세 가지 A4 PDF가 만들어집니다.
+
+## 3분 만에 시작하기 (설치 없음)
+
+1. **`tools/editor.html` 을 브라우저로 엽니다.** 더블클릭하면 됩니다.
+   서버도, npm 도, 인터넷도 필요 없습니다. 아이패드에서도 열립니다.
+2. **“새로 만들기”** → 질문 다섯 개에 답합니다.
+   시험 이름 → 헷갈리는 것 → 비교 기준 → 표 채우기 → 끝.
+3. **인쇄 창에서 “PDF로 저장”** 을 고릅니다.
+
+만든 내용은 브라우저에 자동 저장됩니다. 다른 기기에서 쓰려면
+**파일로 저장**을 눌러 `.yaml` 을 받아두고, 나중에 **불러오기** 하세요.
+
+**손으로 쓰고 싶다면** `output/blank/ko/` 의 낱장 PDF를 쓰세요.
+굿노트·노타빌리티에 **속지 템플릿**으로 등록해서 계속 추가할 수 있습니다.
+
+터미널을 쓸 줄 안다면 `npm run build:all` 로 YAML → PDF 를 일괄 생성할 수 있습니다.
+아래는 그 자세한 설명입니다.
+
+---
+
+## In English
 
 **A printable study-note system built on discrimination and retrieval, not summarisation.**
 Give it a YAML file describing what your exam actually distinguishes; it gives you
@@ -22,14 +48,21 @@ would rather write.
 
 ### A. Type it — `tools/editor.html`
 
-Open the file in a browser. No server, no npm, no network — it works from
-`file://` and on a tablet. Forms for everything, a proper grid editor for the
-matrix (add and remove rows and columns, set a marker per cell), autosave to the
-browser, Korean/English interface. It loads an existing `.yaml` and downloads
-one back, and shows the YAML live while you type.
+Open the file in a browser. **No server, no npm, no network, and no terminal:
+the editor renders the PDF itself.** It bundles the same renderer the Node build
+uses — `scripts/build-editor.js` inlines `src/render.js`, the layout engine, the
+recall generator and `styles.css` — so what you print from the browser is
+byte-for-byte the document `scripts/build.js` produces. That parity is asserted
+by a test, not assumed.
+
+A five-step wizard walks a first-timer through it: exam name → what you confuse
+→ what to compare → fill the grid → print. Everything else (blueprint, error
+log, compression, evidence links) lives behind **전체 모드** so it is available
+without being in the way.
 
 ```
-tools/editor.html   →   my-exam.yaml   →   node scripts/build.js my-exam.yaml   →   PDF
+tools/editor.html  →  인쇄 → “PDF로 저장”          (no install)
+tools/editor.html  →  my-exam.yaml  →  npm run build   (if you want the CLI)
 ```
 
 ### B. Print it blank and write — `output/blank/`

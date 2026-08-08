@@ -1,22 +1,77 @@
 #!/usr/bin/env node
 /**
- * Inlines js-yaml into tools/editor.template.html and writes tools/editor.html.
+ * Builds tools/editor.html from tools/editor.template.html.
  *
- * The editor has to work when opened straight from the filesystem — no server,
- * no npm, no network — which rules out both a CDN and ES-module imports (file://
- * blocks those). So the one dependency it needs, a YAML *parser* for the Load
- * button, is vendored into the file. The emitter is hand-written in the editor
- * itself, because it needs to produce the same block-scalar and flow-map style
- * the examples use.
+ * Inlines two things, because the editor must work when opened straight from
+ * the filesystem — no server, no npm, no network, which rules out both a CDN
+ * and ES-module imports (file:// blocks those):
+ *
+ *   1. js-yaml, for the Load button's parser.
+ *   2. The real renderer — the same archetypes, layout engine, recall generator
+ *      and page templates the Node build uses, plus src/styles.css. This is what
+ *      lets the browser produce the actual PDF via the print dialog instead of
+ *      handing the learner a YAML file and a terminal command.
+ *
+ * Bundling is a concatenation of ES modules with their import/export syntax
+ * stripped, wrapped in an IIFE so nothing leaks into the editor's own scope
+ * (both define `esc`, for one). The modules were split so this works: nothing
+ * in the list below touches fs, ajv or js-yaml.
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 
 const ROOT = process.cwd();
-const tpl = fs.readFileSync(path.join(ROOT, 'tools', 'editor.template.html'), 'utf8');
-const libPath = path.join(ROOT, 'node_modules', 'js-yaml', 'dist', 'js-yaml.min.js');
 
+/** Dependency order. Every one of these must be free of Node built-ins. */
+const MODULES = [
+  'src/lib/text.js',
+  'src/lib/archetypes.js',
+  'src/lib/normalize.js',
+  'src/lib/layout.js',
+  'src/lib/recall.js',
+  'src/render.js',
+];
+
+/** What the editor needs off the bundle. */
+const EXPORTS = [
+  'renderDocument', 'footerTemplate', 'EDITIONS',
+  'normalizeExam', 'stripEmpty',
+  'applyRecall', 'ARCHETYPES', 'ARCHETYPE_KEYS', 'MARKERS', 'defaultColumns',
+];
+
+/** Strip ESM syntax. The modules are hand-written and use only single-line forms. */
+function toScript(src, file) {
+  const out = [];
+  for (const line of src.split('\n')) {
+    if (/^\s*import\s.*from\s+['"].*['"];?\s*$/.test(line)) continue;
+    if (/^\s*export\s*\{[^}]*\}\s*from\s+['"].*['"];?\s*$/.test(line)) continue;
+    if (/^\s*export\s*\{[^}]*\};?\s*$/.test(line)) continue;
+    out.push(line.replace(/^(\s*)export\s+(const|let|function|class|async)\b/, '$1$2'));
+  }
+  const text = out.join('\n');
+  // A leftover `import`/`export` keyword would be a silent syntax error in the
+  // browser, so fail the build here instead.
+  const bad = text.match(/^\s*(import|export)\s/m);
+  if (bad) throw new Error(`${file}: unstripped ESM syntax near "${bad[0].trim()}"`);
+  return text;
+}
+
+const bundleBody = MODULES
+  .map((f) => `\n/* ==== ${f} ==== */\n` + toScript(fs.readFileSync(path.join(ROOT, f), 'utf8'), f))
+  .join('\n');
+
+const css = fs.readFileSync(path.join(ROOT, 'src', 'styles.css'), 'utf8');
+
+const renderer = `/*! Exam Matrix renderer — bundled from src/. Do not edit by hand;
+ * regenerate with: node scripts/build-editor.js */
+var ExamMatrix = (function () {
+${bundleBody}
+  return { ${EXPORTS.join(', ')}, CSS: ${JSON.stringify(css)} };
+})();
+`;
+
+const libPath = path.join(ROOT, 'node_modules', 'js-yaml', 'dist', 'js-yaml.min.js');
 if (!fs.existsSync(libPath)) {
   console.error('js-yaml not found — run `npm install` first.');
   process.exit(1);
@@ -25,17 +80,16 @@ const lib = fs.readFileSync(libPath, 'utf8');
 const version = JSON.parse(
   fs.readFileSync(path.join(ROOT, 'node_modules', 'js-yaml', 'package.json'), 'utf8')
 ).version;
+const yamlBanner = `/*! js-yaml ${version} — MIT License — https://github.com/nodeca/js-yaml
+ * Vendored so this file works offline from file://. */\n`;
 
-const banner = `/*! js-yaml ${version} — MIT License — https://github.com/nodeca/js-yaml
- * Vendored so this file works offline from file://. Do not edit by hand;
- * regenerate with: node scripts/build-editor.js */\n`;
-
-const out = tpl.replace('/*JSYAML*/', () => banner + lib);
-if (out === tpl) {
-  console.error('Placeholder /*JSYAML*/ not found in the template.');
-  process.exit(1);
+let out = fs.readFileSync(path.join(ROOT, 'tools', 'editor.template.html'), 'utf8');
+for (const [token, payload] of [['/*JSYAML*/', yamlBanner + lib], ['/*RENDERER*/', renderer]]) {
+  if (!out.includes(token)) throw new Error(`Placeholder ${token} not found in the template.`);
+  out = out.replace(token, () => payload);
 }
 
 const dest = path.join(ROOT, 'tools', 'editor.html');
 fs.writeFileSync(dest, out);
-console.log(`  tools/editor.html   ${(out.length / 1024).toFixed(0)} KB  (js-yaml ${version} inlined)`);
+console.log(`  tools/editor.html   ${(out.length / 1024).toFixed(0)} KB`);
+console.log(`  bundled: js-yaml ${version}, ${MODULES.length} renderer modules, styles.css`);
