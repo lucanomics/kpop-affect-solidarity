@@ -17,6 +17,7 @@ import { renderDocument, footerTemplate, EDITIONS } from '../src/render.js';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'output');
+const CSS = fs.readFileSync(path.join(ROOT, 'src', 'styles.css'), 'utf8');
 
 const argv = process.argv.slice(2);
 const flag = (name, dflt) => {
@@ -60,7 +61,7 @@ for (const file of targets) {
   ];
 
   for (const [edition, model] of jobs) {
-    const html = renderDocument(model, edition);
+    const html = renderDocument(model, edition, CSS);
     const base = EDITIONS[edition].file;
     const dest = isPrimary
       ? path.join(OUT, base)

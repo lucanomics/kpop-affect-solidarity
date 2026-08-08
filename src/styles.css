@@ -31,9 +31,15 @@
   --tint-exc:   #f0ece5;
   --tint-trap:  #e7e5e9;
 
-  --font-sans:  "Noto Sans CJK KR", "Noto Sans", system-ui, sans-serif;
-  --font-serif: "Noto Serif CJK KR", "Noto Serif", Georgia, serif;
-  --font-mono:  "Noto Sans Mono CJK KR", ui-monospace, monospace;
+  /* Noto CJK first: that is what the committed PDFs are built with. The rest
+     are fallbacks for printing straight from a browser on a machine that does
+     not have Noto — macOS, Windows and iPadOS each get a real Korean face
+     rather than a tofu grid. */
+  --font-sans:  "Noto Sans CJK KR", "Noto Sans KR", "Apple SD Gothic Neo",
+                "Malgun Gothic", "맑은 고딕", Pretendard, system-ui, sans-serif;
+  --font-serif: "Noto Serif CJK KR", "Noto Serif KR", "Apple SD Gothic Neo",
+                "Batang", Georgia, serif;
+  --font-mono:  "Noto Sans Mono CJK KR", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 * { box-sizing: border-box; }
@@ -307,6 +313,25 @@ ol.essentials li::before {
   text-align: center;
   line-height: 4.5mm;
   margin-top: .4mm;
+}
+
+/* --- how-to strip (shown on simple documents in place of the cycle) ------- */
+
+ol.howto { margin: 0; padding: 0; list-style: none; counter-reset: h; }
+ol.howto li {
+  counter-increment: h;
+  position: relative;
+  padding: 2mm 0 2mm 8mm;
+  border-bottom: .5pt dotted var(--hair);
+  font-size: 10pt;
+}
+ol.howto li::before {
+  content: counter(h);
+  position: absolute; left: 0; top: 2.2mm;
+  width: 5mm; height: 5mm;
+  font-family: var(--font-mono); font-size: 8pt; font-weight: 700;
+  color: #fff; background: var(--ink-2); border-radius: 50%;
+  text-align: center; line-height: 5mm;
 }
 
 /* --- decisive distinction panel ------------------------------------------ */
